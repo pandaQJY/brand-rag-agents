@@ -346,7 +346,7 @@ GEO 和 SEO 有什么区别 → 原文问答                      ← 合并后�
 ## 八、目录结构
 
 ```
-brand-kb-studio/
+brand-rag-agents/
 ├── core/         config.py          全局路径、参数与品牌标识
 │                 llm.py             供应商适配 + 按环节选型 + Prompt 加载
 ├── kb/           parse.py           文字层提取 + 阅读顺序恢复 + 页面渲染
