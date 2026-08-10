@@ -1,0 +1,1043 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>技术方案 · 品牌知识库 RAG 内容生成与多 Agent 协作系统</title>
+<style>
+
+  :root{
+    --paper:#FCFCFD; --panel:#F2F5F9; --panel-2:#E9EEF5;
+    --ink:#0F1521; --ink-2:#4A5666; --ink-3:#77828F;
+    --rule:#DBE2EC; --rule-2:#C3CEDC;
+    --accent:#1F44D6; --accent-soft:#E7ECFC; --accent-line:#98ADEE;
+    --ok:#17795A; --ok-soft:#E1F2EA;
+    --warn:#A26A05; --warn-soft:#FBF0DA;
+    --bad:#BC2E2E; --bad-soft:#FAE6E4;
+    --font-sans:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans CJK SC",system-ui,sans-serif;
+    --font-mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,"Cascadia Mono",Consolas,monospace;
+    --font-display:"Songti SC","STSong","Source Han Serif SC","Noto Serif CJK SC",Georgia,serif;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --paper:#0C1017; --panel:#141A24; --panel-2:#1B2330;
+      --ink:#E8ECF2; --ink-2:#98A4B4; --ink-3:#6E7B8C;
+      --rule:#232C39; --rule-2:#33404F;
+      --accent:#7B93FF; --accent-soft:#182140; --accent-line:#41528F;
+      --ok:#3FBF8F; --ok-soft:#11291F;
+      --warn:#D9A23C; --warn-soft:#2A2114;
+      --bad:#F0736C; --bad-soft:#2E1614;
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#0C1017; --panel:#141A24; --panel-2:#1B2330;
+    --ink:#E8ECF2; --ink-2:#98A4B4; --ink-3:#6E7B8C;
+    --rule:#232C39; --rule-2:#33404F;
+    --accent:#7B93FF; --accent-soft:#182140; --accent-line:#41528F;
+    --ok:#3FBF8F; --ok-soft:#11291F;
+    --warn:#D9A23C; --warn-soft:#2A2114;
+    --bad:#F0736C; --bad-soft:#2E1614;
+  }
+  :root[data-theme="light"]{
+    --paper:#FCFCFD; --panel:#F2F5F9; --panel-2:#E9EEF5;
+    --ink:#0F1521; --ink-2:#4A5666; --ink-3:#77828F;
+    --rule:#DBE2EC; --rule-2:#C3CEDC;
+    --accent:#1F44D6; --accent-soft:#E7ECFC; --accent-line:#98ADEE;
+    --ok:#17795A; --ok-soft:#E1F2EA;
+    --warn:#A26A05; --warn-soft:#FBF0DA;
+    --bad:#BC2E2E; --bad-soft:#FAE6E4;
+  }
+
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--paper); color:var(--ink);
+    font-family:var(--font-sans); font-size:16px; line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1120px; margin:0 auto; padding:0 28px 120px}
+
+  /* ---------- masthead ---------- */
+  .masthead{padding:72px 0 40px; border-bottom:2px solid var(--ink)}
+  .kicker{
+    font-family:var(--font-mono); font-size:12px; letter-spacing:.14em;
+    text-transform:uppercase; color:var(--accent); margin:0 0 20px;
+  }
+  h1{
+    font-family:var(--font-display); font-weight:700;
+    font-size:clamp(30px,4.6vw,50px); line-height:1.24; letter-spacing:.01em;
+    margin:0 0 18px; text-wrap:balance; max-width:20ch;
+  }
+  .standfirst{
+    font-size:17px; color:var(--ink-2); max-width:60ch; margin:0 0 32px; line-height:1.7;
+  }
+  .metagrid{
+    display:flex; flex-wrap:wrap; gap:0; border-top:1px solid var(--rule);
+  }
+  .metagrid div{
+    padding:14px 26px 14px 0; margin-right:26px; border-right:1px solid var(--rule);
+  }
+  .metagrid div:last-child{border-right:none}
+  .metagrid dt{
+    font-family:var(--font-mono); font-size:10.5px; letter-spacing:.12em;
+    text-transform:uppercase; color:var(--ink-3); margin:0 0 4px;
+  }
+  .metagrid dd{margin:0; font-size:14px; font-weight:600}
+
+  /* ---------- section grid ---------- */
+  section{
+    display:grid; grid-template-columns:104px minmax(0,1fr);
+    gap:0 40px; padding:52px 0 8px; border-bottom:1px solid var(--rule);
+  }
+  section:last-of-type{border-bottom:none}
+  .rail{position:sticky; top:24px; align-self:start; padding-top:4px}
+  .secnum{
+    font-family:var(--font-display); font-size:34px; font-weight:700;
+    line-height:1; color:var(--accent); display:block;
+  }
+  .raillabel{
+    font-family:var(--font-mono); font-size:10.5px; letter-spacing:.1em;
+    text-transform:uppercase; color:var(--ink-3); margin-top:10px; display:block;
+  }
+  .body{min-width:0}
+  h2{
+    font-size:25px; font-weight:700; line-height:1.35; margin:0 0 20px;
+    letter-spacing:.005em; text-wrap:balance;
+  }
+  h3{
+    font-size:17px; font-weight:700; margin:36px 0 12px; line-height:1.5;
+    padding-left:12px; border-left:3px solid var(--accent);
+  }
+  h4{font-size:15px; font-weight:700; margin:24px 0 8px; color:var(--ink)}
+  p{margin:0 0 16px; max-width:68ch}
+  ul,ol{margin:0 0 16px; padding-left:22px; max-width:66ch}
+  li{margin-bottom:7px}
+  li::marker{color:var(--ink-3)}
+  strong{font-weight:700}
+  a{color:var(--accent)}
+
+  code{
+    font-family:var(--font-mono); font-size:.87em; background:var(--panel);
+    padding:2px 5px; border-radius:3px; border:1px solid var(--rule);
+  }
+  .cite{
+    font-family:var(--font-mono); font-size:.85em; font-weight:600;
+    color:var(--accent); background:var(--accent-soft);
+    padding:1px 5px; border-radius:3px; white-space:nowrap;
+  }
+
+  /* ---------- callouts ---------- */
+  .note{
+    border-left:3px solid var(--accent); background:var(--panel);
+    padding:16px 20px; margin:0 0 20px; border-radius:0 5px 5px 0;
+  }
+  .note.warn{border-left-color:var(--warn); background:var(--warn-soft)}
+  .note.good{border-left-color:var(--ok); background:var(--ok-soft)}
+  .note p:last-child{margin-bottom:0}
+  .note .lab{
+    font-family:var(--font-mono); font-size:10.5px; letter-spacing:.12em;
+    text-transform:uppercase; display:block; margin-bottom:7px; color:var(--ink-2);
+  }
+  .note.warn .lab{color:var(--warn)}
+  .note.good .lab{color:var(--ok)}
+  .note.plain{border-left-color:var(--rule-2)}
+
+  /* ---------- key findings ---------- */
+  .findings{
+    display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr));
+    gap:1px; background:var(--rule); border:1px solid var(--rule);
+    margin:0 0 26px; border-radius:5px; overflow:hidden;
+  }
+  .findings > div{background:var(--paper); padding:18px 20px}
+  .findings .n{
+    font-family:var(--font-mono); font-size:27px; font-weight:700;
+    color:var(--accent); line-height:1.15; font-variant-numeric:tabular-nums;
+  }
+  .findings .n span{font-size:13px; color:var(--ink-3); font-weight:500; margin-left:3px}
+  .findings .t{font-size:13.5px; color:var(--ink-2); margin-top:7px; line-height:1.6}
+
+  /* ---------- figures ---------- */
+  figure{margin:26px 0 30px}
+  .figframe{
+    border:1px solid var(--rule); border-radius:6px; background:var(--panel);
+    padding:22px 20px 16px; overflow-x:auto;
+  }
+  figure svg{display:block; width:100%; height:auto; min-width:520px}
+  figcaption{
+    font-size:13px; color:var(--ink-2); margin-top:12px; line-height:1.65; max-width:70ch;
+  }
+  figcaption b{
+    font-family:var(--font-mono); font-size:11px; letter-spacing:.1em;
+    text-transform:uppercase; color:var(--accent); margin-right:9px; font-weight:600;
+  }
+  /* svg shared */
+  .s-box{fill:var(--paper); stroke:var(--rule-2); stroke-width:1.2}
+  .s-box-a{fill:var(--accent-soft); stroke:var(--accent); stroke-width:1.4}
+  .s-box-m{fill:var(--panel-2); stroke:var(--rule-2); stroke-width:1.2}
+  .s-t{fill:var(--ink); font-family:var(--font-sans); font-size:12.5px}
+  .s-t-a{fill:var(--accent); font-family:var(--font-sans); font-size:12.5px; font-weight:700}
+  .s-lab{fill:var(--ink-2); font-family:var(--font-mono); font-size:10.5px}
+  .s-eyebrow{fill:var(--ink-3); font-family:var(--font-mono); font-size:10px; letter-spacing:.1em}
+  .s-line{stroke:var(--ink-2); stroke-width:1.3; fill:none}
+  .s-line-a{stroke:var(--accent); stroke-width:1.6; fill:none}
+  .s-line-d{stroke:var(--rule-2); stroke-width:1.2; fill:none; stroke-dasharray:4 4}
+  .s-band{fill:var(--panel-2); stroke:none}
+
+  /* chart */
+  .bar-t{fill:var(--accent)}
+  .bar-low{fill:var(--bad)}
+  .bar-i{fill:var(--ink-3); opacity:.55}
+  .ax{stroke:var(--rule-2); stroke-width:1}
+  .axd{stroke:var(--accent); stroke-width:1; stroke-dasharray:3 3}
+
+  /* ---------- tables ---------- */
+  .tablewrap{overflow-x:auto; margin:0 0 24px; border:1px solid var(--rule); border-radius:6px}
+  table{border-collapse:collapse; width:100%; min-width:520px; font-size:14px}
+  th{
+    text-align:left; font-family:var(--font-mono); font-size:10.5px;
+    letter-spacing:.1em; text-transform:uppercase; color:var(--ink-2);
+    background:var(--panel); padding:11px 15px; border-bottom:1px solid var(--rule-2);
+    white-space:nowrap; font-weight:600;
+  }
+  td{padding:12px 15px; border-bottom:1px solid var(--rule); vertical-align:top; line-height:1.6}
+  tbody tr:last-child td{border-bottom:none}
+  td.mono{font-family:var(--font-mono); font-size:12.5px; white-space:nowrap}
+  td.num{font-variant-numeric:tabular-nums; text-align:right; font-family:var(--font-mono)}
+  .pill{
+    display:inline-block; font-family:var(--font-mono); font-size:10.5px;
+    padding:2px 8px; border-radius:99px; font-weight:600; white-space:nowrap;
+  }
+  .p-ok{background:var(--ok-soft); color:var(--ok)}
+  .p-warn{background:var(--warn-soft); color:var(--warn)}
+  .p-bad{background:var(--bad-soft); color:var(--bad)}
+  .p-acc{background:var(--accent-soft); color:var(--accent)}
+
+  /* ---------- code block ---------- */
+  pre{
+    font-family:var(--font-mono); font-size:12.5px; line-height:1.7;
+    background:var(--panel); border:1px solid var(--rule); border-radius:6px;
+    padding:16px 18px; overflow-x:auto; margin:0 0 22px; color:var(--ink);
+  }
+  pre .c{color:var(--ink-3)}
+  pre .k{color:var(--accent); font-weight:600}
+
+
+  @media (max-width:860px){
+    section{grid-template-columns:1fr; gap:0}
+    .rail{position:static; display:flex; align-items:baseline; gap:12px; margin-bottom:14px}
+    .raillabel{margin-top:0}
+    .secnum{font-size:26px}
+    .wrap{padding:0 18px 80px}
+    .masthead{padding:44px 0 30px}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *{animation:none !important; transition:none !important}
+  }
+
+</style>
+
+</head>
+<body>
+<div class="wrap">
+
+<header class="masthead">
+  <p class="kicker">品牌知识库 RAG 系统 · 技术方案</p>
+  <h1>一份品宣稿，两条链路，三处咬合</h1>
+  <p class="standfirst">
+    把品牌品宣 PDF 构建成可检索、可引用的知识库，在其上同时做两件事：
+    生成每句事实都能溯源到页码的营销内容，以及由多个 Agent 协作诊断官网的 AI 可见性并给出内容策略。
+    本文说明这两条链路为什么应当是一个系统，以及支撑它们的工程判断。
+  </p>
+  <div class="metagrid">
+    <div><dt>知识库</dt><dd>42 页 → 38 检索单元</dd></div>
+    <div><dt>站点语料</dt><dd>52 页 / 9.6 万字 → 193 单元</dd></div>
+    <div><dt>Agent</dt><dd>5 能力 + 1 收口</dd></div>
+    <div><dt>幻觉拦截</dt><dd>4.5 层 / 3 层纯代码</dd></div>
+  </div>
+</header>
+
+<!-- ══════════════ 00 摘要 ══════════════ -->
+<section>
+  <div class="rail"><span class="secnum">00</span><span class="raillabel">摘要</span></div>
+  <div class="body">
+    <h2>为什么这两件事应当是一个系统</h2>
+
+    <p>
+      「用 RAG 写营销内容」与「用多 Agent 诊断官网」拆开各做各的，都能跑通。
+      但拆开会丢掉三处能力——它们不是把两个项目并排放置就能得到的，
+      而是<strong>只有当两条链路共享同一个知识库与同一套检索时才成立</strong>。
+    </p>
+
+    <div class="findings">
+      <div>
+        <div class="n">4<span>条标准</span></div>
+        <div class="t">从品宣稿抽出的品牌自述标准，把 3 条诊断结论升格为「按你自己的方法论应做到而未做到」</div>
+      </div>
+      <div>
+        <div class="n">0.741<span>MRR</span></div>
+        <div class="t">高难度查询集上混合检索对纯向量的 0.593，Hit@1 66.7% 对 44.4%</div>
+      </div>
+      <div>
+        <div class="n">31<span>处引用</span></div>
+        <div class="t">策略建议自动成稿，覆盖 19 页、0 处捏造引用、13 个数字逐字命中语料</div>
+      </div>
+    </div>
+
+    <div class="note good">
+      <span class="lab">本方案的一条主线</span>
+      <p>
+        <strong>凡能用确定性方法裁决的，就不该交给模型。</strong>
+        这条判据在系统里出现了五次：引用编号校验、数字比对、结构扫描、依赖拓扑排序、大纲小节数校验。
+        每一次的收益都相同——零成本、零波动、结果可复现。
+        它也解释了本方案的大部分取舍：为什么不用框架、为什么输出不用 JSON、
+        为什么核查要分层而不是交给一次大模型调用。
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════ 01 总体架构 ══════════════ -->
+<section>
+  <div class="rail"><span class="secnum">01</span><span class="raillabel">总体架构</span></div>
+  <div class="body">
+    <h2>两条链路，一套检索</h2>
+
+    <p>
+      系统有两个数据源、两份语料、一套检索、两条消费链路。
+      关键在于中间那一层是<strong>共享</strong>的——正因如此，右侧两条链路才能互相供给，
+      形成图中标为 ①②③ 的三处咬合。
+    </p>
+
+    <figure>
+      <div class="figframe">
+        <svg viewBox="0 0 880 440" role="img" aria-label="系统总体架构：两个数据源经两份语料与共享检索，分别供给内容生成与多 Agent 诊断，并有三处互相咬合">
+          <defs>
+            <marker id="a1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+              <path d="M0,0 L10,5 L0,10 z" fill="var(--ink-2)"/>
+            </marker>
+            <marker id="a1a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+              <path d="M0,0 L10,5 L0,10 z" fill="var(--accent)"/>
+            </marker>
+          </defs>
+
+          <!-- 数据源 -->
+          <text class="s-eyebrow" x="20" y="26">数据源</text>
+          <rect class="s-box" x="20" y="42" width="128" height="60" rx="5"/>
+          <text class="s-t" x="84" y="66" text-anchor="middle">品宣 PDF</text>
+          <text class="s-lab" x="84" y="86" text-anchor="middle">42 页设计稿</text>
+
+          <rect class="s-box" x="20" y="300" width="128" height="60" rx="5"/>
+          <text class="s-t" x="84" y="324" text-anchor="middle">官网</text>
+          <text class="s-lab" x="84" y="344" text-anchor="middle">52 页 / 9.6 万字</text>
+
+          <!-- 语料 -->
+          <text class="s-eyebrow" x="196" y="26">语料（各自锚点）</text>
+          <rect class="s-box-a" x="196" y="42" width="148" height="60" rx="5"/>
+          <text class="s-t-a" x="270" y="66" text-anchor="middle">知识库语料</text>
+          <text class="s-lab" x="270" y="86" text-anchor="middle">38 单元 · 锚页码</text>
+
+          <rect class="s-box-a" x="196" y="300" width="148" height="60" rx="5"/>
+          <text class="s-t-a" x="270" y="324" text-anchor="middle">站点语料</text>
+          <text class="s-lab" x="270" y="344" text-anchor="middle">193 单元 · 锚 URL</text>
+
+          <!-- 共享检索 -->
+          <rect class="s-box-m" x="392" y="150" width="140" height="104" rx="5"/>
+          <text class="s-t" x="462" y="180" text-anchor="middle" font-weight="700">混合检索</text>
+          <text class="s-lab" x="462" y="202" text-anchor="middle">向量 + BM25</text>
+          <text class="s-lab" x="462" y="220" text-anchor="middle">RRF 融合</text>
+          <text class="s-lab" x="462" y="240" text-anchor="middle">两份索引不混用</text>
+
+          <!-- 消费链路 -->
+          <text class="s-eyebrow" x="596" y="26">消费链路</text>
+          <rect class="s-box" x="596" y="42" width="180" height="76" rx="5"/>
+          <text class="s-t" x="686" y="68" text-anchor="middle" font-weight="700">内容生成</text>
+          <text class="s-lab" x="686" y="88" text-anchor="middle">大纲先行 · 分节检索</text>
+          <text class="s-lab" x="686" y="106" text-anchor="middle">四层半幻觉拦截</text>
+
+          <rect class="s-box" x="596" y="272" width="180" height="76" rx="5"/>
+          <text class="s-t" x="686" y="298" text-anchor="middle" font-weight="700">多 Agent 诊断</text>
+          <text class="s-lab" x="686" y="318" text-anchor="middle">三层调度 · 依赖拓扑</text>
+          <text class="s-lab" x="686" y="336" text-anchor="middle">证据分级 A/B/C</text>
+
+          <rect class="s-box" x="596" y="372" width="180" height="46" rx="5"/>
+          <text class="s-t" x="686" y="400" text-anchor="middle">内容策略</text>
+
+          <!-- 主流 -->
+          <path class="s-line" d="M148,72 H190" marker-end="url(#a1)"/>
+          <path class="s-line" d="M148,330 H190" marker-end="url(#a1)"/>
+          <path class="s-line" d="M344,72 H368 Q384,72 384,90 V180 H386" marker-end="url(#a1)"/>
+          <path class="s-line" d="M344,330 H368 Q384,330 384,312 V224 H386" marker-end="url(#a1)"/>
+          <path class="s-line" d="M532,180 H564 Q580,180 580,152 V80 H590" marker-end="url(#a1)"/>
+          <path class="s-line" d="M532,224 H564 Q580,224 580,252 V310 H590" marker-end="url(#a1)"/>
+          <path class="s-line" d="M686,348 V366" marker-end="url(#a1)"/>
+
+          <!-- ① 审计标准：知识库 → 诊断 -->
+          <path class="s-line-a" d="M270,102 V126 Q270,140 286,140 H820 Q838,140 838,158 V310 H782" marker-end="url(#a1a)"/>
+          <circle cx="838" cy="200" r="11" fill="var(--accent)"/>
+          <text x="838" y="204" text-anchor="middle" font-size="11" font-weight="700" fill="#fff">1</text>
+          <text class="s-lab" x="828" y="230" text-anchor="end">审计标准</text>
+
+          <!-- ② 原文问答：检索 → Agent（标注在既有连线旁） -->
+          <circle cx="566" cy="252" r="11" fill="var(--accent)"/>
+          <text x="566" y="256" text-anchor="middle" font-size="11" font-weight="700" fill="#fff">2</text>
+          <text class="s-lab" x="500" y="286">原文问答</text>
+
+          <!-- ③ 策略回灌：内容策略 → 内容生成 -->
+          <path class="s-line-a" d="M596,395 H556 Q540,395 540,377 V120 Q540,104 556,104 H590" marker-end="url(#a1a)"/>
+          <circle cx="540" cy="250" r="11" fill="var(--accent)"/>
+          <text x="540" y="254" text-anchor="middle" font-size="11" font-weight="700" fill="#fff">3</text>
+          <text class="s-lab" x="528" y="290" text-anchor="end">策略回灌</text>
+        </svg>
+      </div>
+      <figcaption>
+        <b>图 1</b>总体架构。两份语料<strong>不混进一个索引</strong>——知识库锚页码
+        <span class="cite">P29</span>，站点锚 URL，混在一起后检索出证据却分不清该标什么，引用溯源即失效。
+        ①②③ 是两条链路的咬合处，它们各自消掉了一个拆开时无解的问题，详见 §06。
+      </figcaption>
+    </figure>
+
+    <div class="note plain">
+      <span class="lab">一句话读懂三处咬合</span>
+      <p>
+        <strong>① 审计标准</strong>：拿品牌自己写的方法论，去审它自己的官网。<br>
+        <strong>② 原文问答</strong>：分析型 Agent 答不了「官网上这句话怎么说的」，检索能。<br>
+        <strong>③ 策略回灌</strong>：诊断说该补什么，写作链路直接把它补出来。
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════ 02 知识库 ══════════════ -->
+<section>
+  <div class="rail"><span class="secnum">02</span><span class="raillabel">知识库</span></div>
+  <div class="body">
+    <h2>把设计稿变成可引用的知识资产</h2>
+
+    <p>
+      品宣稿是设计稿，不是文档。它的信息大量藏在图表、流程图、数据看板里，
+      而 PDF 的文字层只能捞到其中一部分。因此解析必须双通道，且两路产物<strong>分开存放不提前合并</strong>——
+      事实核查时需要知道某条陈述来自可提取文字还是来自图像转写。
+    </p>
+
+    <figure>
+      <div class="figframe">
+        <svg viewBox="0 0 880 300" role="img" aria-label="双通道解析：PDF 同时经文字层提取与页面渲染视觉转写，两路并存后切分建索引">
+          <defs>
+            <marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+              <path d="M0,0 L10,5 L0,10 z" fill="var(--ink-2)"/>
+            </marker>
+          </defs>
+
+          <rect class="s-box" x="20" y="112" width="110" height="66" rx="5"/>
+          <text class="s-t" x="75" y="140" text-anchor="middle">品宣 PDF</text>
+          <text class="s-lab" x="75" y="160" text-anchor="middle">42 页</text>
+
+          <!-- 上路：文字层 -->
+          <rect class="s-box" x="196" y="40" width="176" height="66" rx="5"/>
+          <text class="s-t" x="284" y="66" text-anchor="middle">文字层提取</text>
+          <text class="s-lab" x="284" y="86" text-anchor="middle">PyMuPDF · 阅读顺序恢复</text>
+          <rect class="s-band" x="196" y="112" width="176" height="26" rx="4"/>
+          <text class="s-lab" x="284" y="130" text-anchor="middle">10,738 字</text>
+
+          <!-- 下路：视觉 -->
+          <rect class="s-box-a" x="196" y="180" width="176" height="66" rx="5"/>
+          <text class="s-t-a" x="284" y="206" text-anchor="middle">页面渲染 → 视觉转写</text>
+          <text class="s-lab" x="284" y="226" text-anchor="middle">qwen-vl-max · 断点续做</text>
+          <rect class="s-band" x="196" y="252" width="176" height="26" rx="4"/>
+          <text class="s-lab" x="284" y="270" text-anchor="middle">21,317 字 —— 约三分之二</text>
+
+          <!-- 合流 -->
+          <rect class="s-box" x="440" y="112" width="150" height="66" rx="5"/>
+          <text class="s-t" x="515" y="138" text-anchor="middle">每页两路并存</text>
+          <text class="s-lab" x="515" y="158" text-anchor="middle">不提前合并</text>
+
+          <rect class="s-box" x="650" y="112" width="150" height="66" rx="5"/>
+          <text class="s-t" x="725" y="132" text-anchor="middle">切分 · 建索引</text>
+          <text class="s-lab" x="725" y="150" text-anchor="middle">42 页 → 39 单元</text>
+          <text class="s-lab" x="725" y="168" text-anchor="middle">38 入索引</text>
+
+          <path class="s-line" d="M130,132 H170 Q186,132 186,110 V74 H190" marker-end="url(#a2)"/>
+          <path class="s-line" d="M130,158 H170 Q186,158 186,182 V212 H190" marker-end="url(#a2)"/>
+          <path class="s-line" d="M372,74 H406 Q422,74 422,98 V138 H434" marker-end="url(#a2)"/>
+          <path class="s-line" d="M372,212 H406 Q422,212 422,190 V152 H434" marker-end="url(#a2)"/>
+          <path class="s-line" d="M590,145 H644" marker-end="url(#a2)"/>
+        </svg>
+      </div>
+      <figcaption>
+        <b>图 2</b>双通道解析实测。视觉通道贡献的字数是文字层的近两倍，其中 P8、P34 两页文字层近乎为空，
+        <strong>完全依赖视觉</strong>。若省掉这一路，这些页面上的公司事实根本进不了知识库，
+        下游再怎么防幻觉也无从引用。
+      </figcaption>
+    </figure>
+
+    <h3>切分：为什么以页为单位</h3>
+    <p>
+      幻灯片本身就是设计好的语义块，<strong>页码天然是引用锚点</strong>。在此之上做两件事：
+      识别分节页（带大号装饰序号、自身几无内容）并入其后一页，避免产生「只有一个标题」的噪声单元；
+      把分节页标题作为章节名向后传播，让每个单元都带章节上下文。
+    </p>
+
+    <div class="note warn">
+      <span class="lab">这个决定的代价</span>
+      <p>
+        以页为单位在多数情况下成立，但<strong>一个论点跨两三页展开时，单页单元会丢失上下文</strong>。
+        当前靠「章节名向后传播」缓解，不彻底。后续方向是父子单元：检索用页级，
+        喂给模型时带上同章节的相邻页。
+      </p>
+    </div>
+
+    <h3>站点语料为什么反过来，按 h2 分节</h3>
+    <p>
+      网页不是幻灯片，一篇 5,760 字的 Blog 是连续文档。整页做成一个单元能命中它，
+      却无法指出「答案在哪一段」——而站点语料的用途恰恰是回答「官网上关于 X 是怎么说的」。
+    </p>
+    <p>
+      实测依据很具体：首页 3,508 字、62 个标题，其中就包含「GEO 与 SEO 的区别」那组 FAQ。
+      整页一个单元时它被淹没在另外六十多个标题里；按 h2 切开后成为独立单元，检索可直接命中。
+      52 页最终切成 193 个单元，26 页被切成多节。
+    </p>
+  </div>
+</section>
+
+<!-- ══════════════ 03 检索 ══════════════ -->
+<section>
+  <div class="rail"><span class="secnum">03</span><span class="raillabel">检索</span></div>
+  <div class="body">
+    <h2>混合检索与它的评测陷阱</h2>
+
+    <p>
+      向量（bge-small-zh + FAISS）与 BM25（jieba 分词）两路并行，用 <strong>RRF</strong> 融合而非加权求和：
+      余弦相似度落在 [0,1]，BM25 分数无上界且随语料波动，两者量纲不同，加权必须先归一化，
+      而归一化系数会随语料变化失效。RRF 只看<strong>排名</strong>不看分数，无需调权重。
+    </p>
+
+    <pre>RRF(d) = Σ 1 / (k + rank<span class="c">ᵢ</span>(d))     <span class="c">k = 60（惯例）</span></pre>
+
+    <p>
+      k 的作用是压低头部名次的绝对优势，使「在两路都排中游」的文档能胜过「只在一路排第一」——
+      这正是混合检索想要的行为。
+    </p>
+
+    <h3>一个满分的评测集比没有评测更危险</h3>
+
+    <figure>
+      <div class="figframe">
+        <svg viewBox="0 0 880 300" role="img" aria-label="基础集与高难度集上三种检索方式的 Hit@1 对比柱状图">
+          <text class="s-eyebrow" x="20" y="22">基础集 · 16 条查询 · HIT@1</text>
+          <text class="s-eyebrow" x="470" y="22">高难度集 · 9 条查询 · HIT@1</text>
+
+          <!-- 基础集 -->
+          <line class="ax" x1="20" y1="230" x2="420" y2="230"/>
+          <rect class="bar-i" x="60"  y="98"  width="72" height="132"/>
+          <rect class="bar-i" x="176" y="116" width="72" height="114"/>
+          <rect class="bar-i" x="292" y="98"  width="72" height="132"/>
+          <text class="s-lab" x="96"  y="90"  text-anchor="middle">93.8%</text>
+          <text class="s-lab" x="212" y="108" text-anchor="middle">81.2%</text>
+          <text class="s-lab" x="328" y="90"  text-anchor="middle">93.8%</text>
+          <text class="s-lab" x="96"  y="248" text-anchor="middle">向量</text>
+          <text class="s-lab" x="212" y="248" text-anchor="middle">BM25</text>
+          <text class="s-lab" x="328" y="248" text-anchor="middle">混合</text>
+          <text class="s-lab" x="220" y="278" text-anchor="middle" fill="var(--ink-3)">三路 Hit@5 全部 100% —— 看不出混合有无价值</text>
+
+          <line class="s-line-d" x1="444" y1="20" x2="444" y2="280"/>
+
+          <!-- 高难集 -->
+          <line class="ax" x1="470" y1="230" x2="860" y2="230"/>
+          <rect class="bar-low" x="506" y="167" width="72" height="63"/>
+          <rect class="bar-low" x="620" y="183" width="72" height="47"/>
+          <rect class="bar-t"   x="734" y="136" width="72" height="94"/>
+          <text class="s-lab" x="542" y="159" text-anchor="middle">44.4%</text>
+          <text class="s-lab" x="656" y="175" text-anchor="middle">33.3%</text>
+          <text class="s-t-a" x="770" y="128" text-anchor="middle">66.7%</text>
+          <text class="s-lab" x="542" y="248" text-anchor="middle">向量</text>
+          <text class="s-lab" x="656" y="248" text-anchor="middle">BM25</text>
+          <text class="s-t-a" x="770" y="248" text-anchor="middle">混合</text>
+          <text class="s-lab" x="665" y="278" text-anchor="middle" fill="var(--ink-3)">MRR 0.741 / 0.593 / 0.511 —— 混合严格更优</text>
+        </svg>
+      </div>
+      <figcaption>
+        <b>图 3</b>两组评测集上的 Hit@1。基础集（查询与页标题接近）三路 Hit@5 都是 100%，
+        <strong>区分度已经耗尽</strong>——若只看这一组，会得出「BM25 可以删掉」的错误结论。
+        因此补了刻意贴近真实写作场景的高难度集：主题式宽问题（与任何标题都不字面重合）+ 专名查询。
+        BM25 这一路的价值到这里才成为实测结论，而不是理论推演。
+      </figcaption>
+    </figure>
+
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>评测集</th><th>检索方式</th><th class="num">Hit@1</th><th class="num">Hit@5</th><th class="num">MRR</th></tr></thead>
+        <tbody>
+          <tr><td rowspan="3">基础集 16 条</td><td>向量 (bge)</td><td class="num">93.8%</td><td class="num">100.0%</td><td class="num">0.969</td></tr>
+          <tr><td>BM25</td><td class="num">81.2%</td><td class="num">100.0%</td><td class="num">0.896</td></tr>
+          <tr><td>混合 (RRF)</td><td class="num">93.8%</td><td class="num">100.0%</td><td class="num">0.969</td></tr>
+          <tr><td rowspan="3">高难度集 9 条</td><td>向量 (bge)</td><td class="num">44.4%</td><td class="num">88.9%</td><td class="num">0.593</td></tr>
+          <tr><td>BM25</td><td class="num">33.3%</td><td class="num">88.9%</td><td class="num">0.511</td></tr>
+          <tr><td><strong>混合 (RRF)</strong></td><td class="num"><strong>66.7%</strong></td><td class="num"><strong>88.9%</strong></td><td class="num"><strong>0.741</strong></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note warn">
+      <span class="lab">评测本身的不足</span>
+      <p>
+        两组合计 25 条人工标注查询，规模仍偏小：高难度集单条查询权重高达 11%，
+        一次标注错误就会明显移动分数。当前唯一未命中的是「怎么衡量优化之后有没有效果」——
+        期望产品监控页，实得三个相邻页。这类「问效果、答案在产品页」的跨语义查询是现有两路都不擅长的。
+      </p>
+    </div>
+
+    <h3>语料抽象：一套检索服务两份语料</h3>
+    <p>
+      检索层不认识具体的语料类型，只依赖一个协议——「有 <code>chunk_id</code>、
+      能给出 <code>index_text()</code>、能报出自己的引用锚点」。
+      知识库单元与站点单元各自满足它，因此新增第三份语料（如客户案例库）只需再声明一个 <code>Corpus</code>，
+      检索代码一行不改。
+    </p>
+    <div class="note plain">
+      <span class="lab">一处刻意的降级</span>
+      <p>
+        向量索引缺失时降级为纯 BM25 而非报错。理由是两条路的成本不对称：
+        BM25 在内存里现建即可，向量索引需要先跑一次构建。
+        只抓了官网还没建索引时，原文问答仍应能回答问题——检索质量下降，但功能不塌。
+        <strong>降级会打印提示，不静默。</strong>
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════ 04 幻觉控制 ══════════════ -->
+<section>
+  <div class="rail"><span class="secnum">04</span><span class="raillabel">幻觉控制</span></div>
+  <div class="body">
+    <h2>四层半拦截，其中三层不调模型</h2>
+
+    <p>
+      内容生成的第一约束是不得编造知识库里没有的公司事实、客户案例、数据或技术指标。
+      仅在 Prompt 里写「不要编造」是不够的——那是<strong>请求</strong>，不是<strong>约束</strong>。
+    </p>
+
+    <figure>
+      <div class="figframe">
+        <svg viewBox="0 0 880 330" role="img" aria-label="四层半幻觉拦截：第 1 层 Prompt 约束，第 2、3、3.5 层为纯代码校验，第 4 层为 LLM 事实核查">
+          <defs>
+            <marker id="a4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+              <path d="M0,0 L10,5 L0,10 z" fill="var(--ink-2)"/>
+            </marker>
+          </defs>
+
+          <text class="s-eyebrow" x="20" y="22">生成的正文</text>
+          <text class="s-eyebrow" x="712" y="22">可发布初稿</text>
+
+          <rect class="s-box-m" x="20" y="40" width="96" height="220" rx="5"/>
+          <text class="s-t" x="68" y="146" text-anchor="middle">带 [Pxx]</text>
+          <text class="s-t" x="68" y="166" text-anchor="middle">的正文</text>
+
+          <!-- 五道闸 -->
+          <rect class="s-box" x="150" y="40" width="118" height="220" rx="5"/>
+          <text class="s-t" x="209" y="126" text-anchor="middle" font-weight="700">第 1 层</text>
+          <text class="s-lab" x="209" y="148" text-anchor="middle">Prompt 硬约束</text>
+          <text class="s-lab" x="209" y="172" text-anchor="middle" fill="var(--ink-3)">模型</text>
+
+          <rect class="s-box-a" x="288" y="40" width="118" height="220" rx="5"/>
+          <text class="s-t-a" x="347" y="126" text-anchor="middle" font-weight="700">第 2 层</text>
+          <text class="s-lab" x="347" y="148" text-anchor="middle">引用格式解析</text>
+          <text class="s-lab" x="347" y="172" text-anchor="middle" fill="var(--accent)">纯代码</text>
+
+          <rect class="s-box-a" x="426" y="40" width="118" height="220" rx="5"/>
+          <text class="s-t-a" x="485" y="126" text-anchor="middle" font-weight="700">第 3 层</text>
+          <text class="s-lab" x="485" y="148" text-anchor="middle">编号有效性</text>
+          <text class="s-lab" x="485" y="172" text-anchor="middle" fill="var(--accent)">纯代码</text>
+
+          <rect class="s-box-a" x="564" y="40" width="118" height="220" rx="5"/>
+          <text class="s-t-a" x="623" y="118" text-anchor="middle" font-weight="700">第 3.5 层</text>
+          <text class="s-lab" x="623" y="140" text-anchor="middle">数字确定性</text>
+          <text class="s-lab" x="623" y="158" text-anchor="middle">逐字比对语料</text>
+          <text class="s-lab" x="623" y="182" text-anchor="middle" fill="var(--accent)">纯代码</text>
+
+          <rect class="s-box" x="702" y="40" width="118" height="220" rx="5"/>
+          <text class="s-t" x="761" y="126" text-anchor="middle" font-weight="700">第 4 层</text>
+          <text class="s-lab" x="761" y="148" text-anchor="middle">LLM 事实核查</text>
+          <text class="s-lab" x="761" y="172" text-anchor="middle" fill="var(--ink-3)">一次调用</text>
+
+          <path class="s-line" d="M116,150 H144" marker-end="url(#a4)"/>
+          <path class="s-line" d="M268,150 H282" marker-end="url(#a4)"/>
+          <path class="s-line" d="M406,150 H420" marker-end="url(#a4)"/>
+          <path class="s-line" d="M544,150 H558" marker-end="url(#a4)"/>
+          <path class="s-line" d="M682,150 H696" marker-end="url(#a4)"/>
+
+          <rect class="s-band" x="288" y="278" width="394" height="30" rx="4"/>
+          <text class="s-lab" x="485" y="297" text-anchor="middle">三层纯代码 · 零 API 成本 · 零波动 · 可复现</text>
+        </svg>
+      </div>
+      <figcaption>
+        <b>图 4</b>拦截分层。中间三层完全不调模型，因此它们的判定<strong>不随采样波动</strong>，
+        每次运行结果一致。第 1 层与第 4 层依赖模型，各自有其不可替代之处，但都不足以单独承担事实纪律。
+      </figcaption>
+    </figure>
+
+    <h3>为什么单独设第 3.5 层</h3>
+    <ol>
+      <li><strong>数字是幻觉最危险的载体。</strong>A/B 实测中，对照模型把证据里的「61.66 亿」写成「80 亿」，
+        并凭空造出「300%」——句子读起来专业、还挂着真实的引用编号，人眼极难发现。</li>
+      <li><strong>LLM 核查器对数字不可靠。</strong>实测同一篇文章两次核查结果不同（1 条 vs 5 条），存在采样波动。</li>
+      <li><strong>这件事本不需要模型。</strong>数字要么在语料里逐字出现，要么没有。
+        一次 <code>in corpus</code> 判定即可，零成本、零波动、无漏报。</li>
+    </ol>
+
+    <div class="note warn">
+      <span class="lab">这一层已知的边界</span>
+      <p>
+        它分不清「跨证据推算」与「凭空编造」。模型把某两页里 Top 6 的月访问量加总得出「超 80 亿」，
+        第 3.5 层判编造（语料中查无此数），第 4 层判有据支持——<strong>两层结论相反</strong>。
+        实际情况是模型做了一次加法，数在事实上正确，但确实不是语料里的原话。
+      </p>
+      <p>
+        当前处置是标出来交给人判断，不自动改写：幻觉控制场景下宁可多报不漏报。
+        <strong>两层结论矛盾本身不是缺陷，而是设计意图——如果两层永远一致，其中一层就是多余的。</strong>
+      </p>
+    </div>
+
+    <h3>选型也是幻觉控制的一部分</h3>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>生成模型</th><th>固定大纲与证据下的表现</th><th>结论</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">qwen-max</td><td>套话多，且违反 Prompt 明令禁止的「本文将探讨」句式</td><td><span class="pill p-warn">未选</span></td></tr>
+          <tr><td class="mono">qwen3-max</td><td>开篇即上带引用的硬事实，事实纪律良好</td><td><span class="pill p-ok">选它</span></td></tr>
+          <tr><td class="mono">deepseek-v3</td><td>文笔最佳，但把 61.66 亿写成 80 亿、凭空造出 300%</td><td><span class="pill p-bad">未选</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>第一优先级是不得编造数据，因此选事实纪律而非文笔。选型配置按环节分离，改模型不动业务代码。</p>
+  </div>
+</section>
+
+<!-- ══════════════ 05 调度 ══════════════ -->
+<section>
+  <div class="rail"><span class="secnum">05</span><span class="raillabel">调度</span></div>
+  <div class="body">
+    <h2>路由的产物不是「选中一个 Agent」，而是一份执行计划</h2>
+
+    <p>
+      这是「简单写多个 Prompt」与「真正调度」的分界。
+      调度分三层，同样遵循确定性优先：能用规则解决的不调模型，能用代码推导的不问模型。
+    </p>
+
+    <figure>
+      <div class="figframe">
+        <svg viewBox="0 0 880 420" role="img" aria-label="三层路由与依赖补齐：规则匹配、LLM 兜底、递归展开与拓扑排序，产出四环节执行计划">
+          <defs>
+            <marker id="a5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+              <path d="M0,0 L10,5 L0,10 z" fill="var(--ink-2)"/>
+            </marker>
+            <marker id="a5a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+              <path d="M0,0 L10,5 L0,10 z" fill="var(--accent)"/>
+            </marker>
+          </defs>
+
+          <!-- 输入 -->
+          <rect class="s-box-m" x="20" y="24" width="840" height="40" rx="5"/>
+          <text class="s-t" x="440" y="49" text-anchor="middle">用户：「官网该补充什么内容？」</text>
+
+          <!-- 三层 -->
+          <rect class="s-box" x="20" y="92" width="260" height="72" rx="5"/>
+          <text class="s-t" x="150" y="118" text-anchor="middle" font-weight="700">① 规则匹配</text>
+          <text class="s-lab" x="150" y="138" text-anchor="middle">词组共现 → Agent</text>
+          <text class="s-lab" x="150" y="156" text-anchor="middle" fill="var(--ok)">零成本 · 零延迟</text>
+
+          <rect class="s-box" x="310" y="92" width="260" height="72" rx="5"/>
+          <text class="s-t" x="440" y="118" text-anchor="middle" font-weight="700">② LLM Router</text>
+          <text class="s-lab" x="440" y="138" text-anchor="middle">仅复合与模糊问题触发</text>
+          <text class="s-lab" x="440" y="156" text-anchor="middle" fill="var(--ink-3)">一次小调用</text>
+
+          <rect class="s-box-a" x="600" y="92" width="260" height="72" rx="5"/>
+          <text class="s-t-a" x="730" y="118" text-anchor="middle" font-weight="700">③ 依赖补齐</text>
+          <text class="s-lab" x="730" y="138" text-anchor="middle">递归展开 + 拓扑排序</text>
+          <text class="s-lab" x="730" y="156" text-anchor="middle" fill="var(--accent)">纯代码 · 可复现</text>
+
+          <path class="s-line" d="M150,64 V86" marker-end="url(#a5)"/>
+          <path class="s-line-d" d="M280,128 H304" marker-end="url(#a5)"/>
+          <path class="s-line-a" d="M570,128 H594" marker-end="url(#a5a)"/>
+          <text class="s-lab" x="292" y="118" text-anchor="middle" fill="var(--ink-3)">未命中</text>
+
+          <!-- DAG -->
+          <text class="s-eyebrow" x="20" y="212">系统自行推导出的执行计划</text>
+
+          <rect class="s-box-a" x="20" y="230" width="176" height="58" rx="5"/>
+          <text class="s-t-a" x="108" y="254" text-anchor="middle">官网信息分析</text>
+          <text class="s-lab" x="108" y="274" text-anchor="middle">依赖补齐</text>
+
+          <rect class="s-box-a" x="252" y="176" width="176" height="58" rx="5"/>
+          <text class="s-t-a" x="340" y="200" text-anchor="middle">GEO 诊断</text>
+          <text class="s-lab" x="340" y="220" text-anchor="middle">依赖补齐</text>
+
+          <rect class="s-box-a" x="252" y="286" width="176" height="58" rx="5"/>
+          <text class="s-t-a" x="340" y="310" text-anchor="middle">用户问题生成</text>
+          <text class="s-lab" x="340" y="330" text-anchor="middle">依赖补齐</text>
+
+          <rect class="s-box" x="484" y="230" width="176" height="58" rx="5"/>
+          <text class="s-t" x="572" y="254" text-anchor="middle" font-weight="700">内容策略</text>
+          <text class="s-lab" x="572" y="274" text-anchor="middle" fill="var(--ok)">规则直接命中</text>
+
+          <rect class="s-box-m" x="704" y="230" width="156" height="58" rx="5"/>
+          <text class="s-t" x="782" y="254" text-anchor="middle">整合收口</text>
+          <text class="s-lab" x="782" y="274" text-anchor="middle">不参与路由</text>
+
+          <path class="s-line" d="M196,248 H228 Q244,248 244,228 V205 H246" marker-end="url(#a5)"/>
+          <path class="s-line" d="M196,270 H228 Q244,270 244,290 V315 H246" marker-end="url(#a5)"/>
+          <path class="s-line" d="M428,205 H456 Q472,205 472,228 V252 H478" marker-end="url(#a5)"/>
+          <path class="s-line" d="M428,315 H456 Q472,315 472,292 V266 H478" marker-end="url(#a5)"/>
+          <path class="s-line" d="M660,259 H698" marker-end="url(#a5)"/>
+
+          <rect class="s-band" x="20" y="368" width="840" height="34" rx="4"/>
+          <text class="s-lab" x="440" y="390" text-anchor="middle">用户提一个需求，系统排一条流水线 —— 依赖是类属性，路由无需执行任何 Agent 即可推出完整计划</text>
+        </svg>
+      </div>
+      <figcaption>
+        <b>图 5</b>第 ③ 层是关键。用户只说了「该补充什么内容」，规则命中内容策略，
+        而它依赖 GEO 诊断与用户问题生成，二者又都依赖官网信息分析——四个环节的执行顺序由代码推导，
+        零成本、零波动。每个环节都附带被选中的理由，界面直接展示。
+      </figcaption>
+    </figure>
+
+    <h3>追问缓存的正确性判据</h3>
+    <p>
+      连续追问时编排器复用板上已有结果，这个优化成立的前提是<strong>该 Agent 的产出与用户问什么无关</strong>。
+      分析型 Agent 满足——它们只通读官网、输出固定小节，换个问题结论也一样。
+      但原文问答与整合收口不满足：它们的输入里就含用户的问题，复用上一轮等于答非所问。
+    </p>
+    <div class="note good">
+      <span class="lab">把判据放在正确的位置</span>
+      <p>
+        这条判据声明在 Agent 类上（<code>question_dependent</code>），而不是硬编码在编排器里。
+        因此新增 Agent 时只需如实声明自己是哪一类，<strong>调度与界面自动跟上</strong>——
+        不需要有人记得去另一个文件里补一行 if。
+      </p>
+    </div>
+
+    <h3>证据分级</h3>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>档位</th><th>判据</th><th>可靠性</th></tr></thead>
+        <tbody>
+          <tr><td><span class="pill p-bad">A 档</span></td><td>与品牌品宣稿的自述标准冲突</td><td>判据出自品牌自己的方法论，不可反驳</td></tr>
+          <tr><td><span class="pill p-acc">B 档</span></td><td>纯代码扫描出的可观测事实</td><td>可复现</td></tr>
+          <tr><td><span class="pill p-warn">C 档</span></td><td>行业推测，无公开确证</td><td>仅供参考</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════ 06 咬合点 ══════════════ -->
+<section>
+  <div class="rail"><span class="secnum">06</span><span class="raillabel">咬合点</span></div>
+  <div class="body">
+    <h2>三处只有合并后才成立的能力</h2>
+
+    <h3>① 审计标准：拿品牌自己的方法论去审它自己</h3>
+    <p>
+      诊断官网最难的不是找问题，是让结论站得住。初版写「官网无 JSON-LD，AI 无从识别实体」——
+      这站不住，大模型读纯文本毫无障碍，JSON-LD 对 AI 检索管线的加权作用并无公开确证。
+    </p>
+    <div class="note good">
+      <span class="lab">换判据之后</span>
+      <p>
+        <strong>品牌方自己的方法论把 JSON-LD 列为 GEO 网站基建的首要能力</strong>
+        （品宣稿 <span class="cite">P29</span>），<strong>而官网 52 页覆盖率为 0。</strong>
+      </p>
+      <p>
+        这不是「我建议你加 schema」，而是「按你们自己写的标准，官网没做到」——
+        除非承认方法论有问题，否则无法反驳。实测抽出 4 条标准，升格 3 条结论为 A 档。
+      </p>
+    </div>
+
+    <h3>② 原文问答：补上一条本该存在的路径</h3>
+    <p>
+      原有四个 Agent 全是「通读全站 → 输出固定小节」的分析器，答不了指向具体内容的问题。
+      问「GEO 和 SEO 有什么区别」时，路由只能指向官网信息分析，而它的八个小节里没有一节是
+      「官网对某个概念是怎么讲的」——<strong>答案就在已抓取的页面里，系统却没有路径把它取出来</strong>。
+    </p>
+    <p>
+      补上这条路径需要的正是检索能力，而知识库链路已经有一套实测过的混合检索。
+      把它指向站点语料，缺口即被填上：检索定位到具体小节 → 模型据此作答 → 标注页面 URL 供人核对。
+    </p>
+
+    <h3>③ 策略回灌：让建议变成可发布的初稿</h3>
+    <figure>
+      <div class="figframe">
+        <svg viewBox="0 0 880 200" role="img" aria-label="诊断到成稿的闭环：抓官网、诊断、模拟客户提问、内容策略、生成初稿">
+          <defs>
+            <marker id="a6" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+              <path d="M0,0 L10,5 L0,10 z" fill="var(--accent)"/>
+            </marker>
+          </defs>
+          <rect class="s-box" x="20" y="40" width="140" height="56" rx="5"/>
+          <text class="s-t" x="90" y="74" text-anchor="middle">抓官网</text>
+          <rect class="s-box" x="196" y="40" width="140" height="56" rx="5"/>
+          <text class="s-t" x="266" y="74" text-anchor="middle">GEO 诊断</text>
+          <rect class="s-box" x="372" y="40" width="140" height="56" rx="5"/>
+          <text class="s-t" x="442" y="66" text-anchor="middle">客户会怎么问</text>
+          <text class="s-lab" x="442" y="84" text-anchor="middle">三阶段模拟</text>
+          <rect class="s-box" x="548" y="40" width="140" height="56" rx="5"/>
+          <text class="s-t" x="618" y="74" text-anchor="middle">内容策略</text>
+          <rect class="s-box-a" x="724" y="40" width="136" height="56" rx="5"/>
+          <text class="s-t-a" x="792" y="66" text-anchor="middle">带引用初稿</text>
+          <text class="s-lab" x="792" y="84" text-anchor="middle">四层半照常生效</text>
+
+          <path class="s-line-a" d="M160,68 H190" marker-end="url(#a6)"/>
+          <path class="s-line-a" d="M336,68 H366" marker-end="url(#a6)"/>
+          <path class="s-line-a" d="M512,68 H542" marker-end="url(#a6)"/>
+          <path class="s-line-a" d="M688,68 H718" marker-end="url(#a6)"/>
+
+          <rect class="s-band" x="20" y="128" width="840" height="52" rx="4"/>
+          <text class="s-lab" x="440" y="150" text-anchor="middle">实跑：1,838 字 · 31 处引用覆盖 19 页 · 0 处捏造引用</text>
+          <text class="s-lab" x="440" y="170" text-anchor="middle">13 个数字全部逐字命中语料 · 事实核查通过率 100%</text>
+        </svg>
+      </div>
+      <figcaption>
+        <b>图 6</b>内容运营闭环。真正让这个衔接有价值的不是省了一次复制粘贴，而是<strong>成稿的事实边界</strong>：
+        写作链路只能引用知识库里的内容且要过四层半拦截，因此产出的不是「AI 编的一篇稿子」，
+        而是只由品牌已公开事实组装、每句可溯源到页码的初稿——它可以直接进入人工润色，不必先做一遍事实核对。
+      </figcaption>
+    </figure>
+
+    <div class="note plain">
+      <span class="lab">写不了的要说清为什么写不了</span>
+      <p>
+        13 条策略建议里有 3 条被主动跳过：两条「案例页」因知识库没有客户案例的细节事实，
+        硬写只会得到泛泛之谈；一条「元数据修改」根本不是文章，是改 meta 标签的工程任务。
+        <strong>把不可写的项也塞进流水线，只会得到一堆需要人逐句删改的稿子，那比不生成更糟。</strong>
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════ 07 工程判断 ══════════════ -->
+<section>
+  <div class="rail"><span class="secnum">07</span><span class="raillabel">工程判断</span></div>
+  <div class="body">
+    <h2>确定性优先，以及它的五次应用</h2>
+
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>应用处</th><th>本可以交给模型</th><th>改为代码裁决后</th></tr></thead>
+        <tbody>
+          <tr><td>引用编号校验（第 3 层）</td><td>让模型自查引用对不对</td><td>比对本次证据集，编号不存在即判捏造</td></tr>
+          <tr><td>数字比对（第 3.5 层）</td><td>让核查器判断数字是否属实</td><td>逐字比对语料，无漏报、无采样波动</td></tr>
+          <tr><td>结构扫描（B 档诊断）</td><td>让模型看页面判断结构好坏</td><td>title 唯一性、JSON-LD、h1 数、alt 缺失率直接测</td></tr>
+          <tr><td>依赖补齐与排序</td><td>让模型决定先调用谁</td><td>静态声明 + 递归展开 + 拓扑排序</td></tr>
+          <tr><td>大纲小节数校验</td><td>相信模型遵守 Prompt 里的数量约束</td><td>按规格区间校验并重试一次</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note warn">
+      <span class="lab">最后一条是跑了两次才发现的</span>
+      <p>
+        同一条 FAQ 指令两次规划，一次 7 个问题、一次 3 个，而规格明写「6–10 个问题」——
+        <strong>模型违反了自己收到的约束，而系统毫无察觉</strong>，直接拿 3 节的大纲跑完了整条链路。
+        数量是纯确定性判据，本就不该由模型裁决。
+      </p>
+      <p>
+        处置强度也需要判断：<strong>重试一次而非报错</strong>。小节偏少只影响完整度不影响正确性，
+        为此中断整条链路不值当；重试仍不达标就带警告继续，把判断留给人——
+        与第 3.5 层「标出来交给人」的处置一致。
+      </p>
+    </div>
+
+    <h3>为什么不用 LangChain / LlamaIndex / CrewAI</h3>
+    <ol>
+      <li><strong>幻觉控制是本方案重心，而这是框架封装最薄的一环。</strong>
+        四层半里三层是自写的确定性校验，用框架反而要绕开它的默认链路。</li>
+      <li><strong>「大纲先行、分节检索」不是框架的默认形态。</strong>
+        <code>RetrievalQA</code> 是一次检索一次生成，要改成每节自带查询各自检索，等于绕过框架自己编排。</li>
+      <li><strong>调度逻辑本身就是要展示的东西。</strong>DAG 只有 6 个节点、依赖静态可知，
+        Agent 基类约 90 行、路由约 130 行。用框架的 <code>Crew</code>/<code>Graph</code> 把调度包起来，
+        展示出来的是「会配置框架」而非「会设计调度」。</li>
+      <li><strong>Prompt 需要逐字可控。</strong>四种内容类型的结构规范要分别注入大纲与生成两个 Prompt，
+        框架的模板层反而是阻碍。</li>
+    </ol>
+    <p>不用框架不等于不会用框架——这是规模判断，不是能力边界。</p>
+
+    <h3>输出一律行式，不用 JSON</h3>
+    <p>
+      实测本项目所用模型在嵌套结构上不可靠（漏方括号、吐垃圾片段），
+      而 <code>## 小节名</code> + 每行一条的记录块式文本解析确定且零失败。
+      这条结论先在写作链路得到验证，后被 Agent 链路沿用。
+    </p>
+  </div>
+</section>
+
+<!-- ══════════════ 08 不足 ══════════════ -->
+<section>
+  <div class="rail"><span class="secnum">08</span><span class="raillabel">不足</span></div>
+  <div class="body">
+    <h2>已知边界与后续方向</h2>
+
+    <p>按影响排序。第一条是当前最危险的，因为它<strong>绕过了全部拦截机制</strong>。</p>
+
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>不足</th><th>影响</th><th>后续方向</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><strong>视觉转写质量无法自动校验</strong></td>
+            <td>模型若把图表里的数字看错，下游全部环节继承该错误，而四层半拦截<strong>查不出来</strong>——它对照的正是这份已经错了的语料</td>
+            <td>对含数字的页做双模型交叉转写，不一致处标记待人工确认</td>
+          </tr>
+          <tr>
+            <td>第 3.5 层分不清推算与编造</td>
+            <td>跨证据做加法得到的正确数字会被判为编造</td>
+            <td>对 <code>missing</code> 的数字追加一次「能否由证据中的数经简单运算得到」的定向检查</td>
+          </tr>
+          <tr>
+            <td>评测集仅 25 条人工标注</td>
+            <td>高难度集单条权重 11%，一次标注错误明显移动分数</td>
+            <td>扩到 50+ 条，补跨页论述与多跳问题</td>
+          </tr>
+          <tr>
+            <td>大纲只校验数量，不校验覆盖面</td>
+            <td>7 个问题也可能全都围着同一件事打转</td>
+            <td>比对大纲与资料库目录的覆盖度，对未被触及的章节给出提示</td>
+          </tr>
+          <tr>
+            <td>知识库仅支持单文档</td>
+            <td>多文档需要引用格式带文档标识与跨文档证据冲突处理</td>
+            <td>站点语料侧已走通多语料抽象，知识库侧照此跟上</td>
+          </tr>
+          <tr>
+            <td>Agent 依赖为静态声明</td>
+            <td>无法按问题动态调整依赖强度</td>
+            <td>引入可选依赖：上游证据已充分时跳过前置环节</td>
+          </tr>
+          <tr>
+            <td>客户问题生成无真实验证</td>
+            <td>生成的问题是模型模拟，未与真实搜索数据比对</td>
+            <td>接入真实 AI 平台提问测试，验证官网是否真的被引用</td>
+          </tr>
+          <tr>
+            <td>抓取为单次快照</td>
+            <td>官网更新后需手动重抓</td>
+            <td>记录 ETag / Last-Modified 做增量更新与变更对比</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note plain">
+      <span class="lab">延伸阅读</span>
+      <p>
+        两条链路各自的详细设计见
+        <a href="设计说明_知识库与内容生成.html">《知识库构建与内容生成链路》</a>与
+        <a href="设计说明_多Agent协作.html">《多 Agent 协作与 GEO 诊断链路》</a>；
+        完整实跑记录见仓库 <code>examples/</code>，其中 <code>agents/03</code> 与 <code>agents/04</code>
+        分别对应本文 §06 的咬合点 ② 与 ③。
+      </p>
+    </div>
+  </div>
+</section>
+
+</div>
+
+</body>
+</html>
