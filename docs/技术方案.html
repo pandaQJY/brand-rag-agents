@@ -268,18 +268,19 @@
   </div>
   <nav class="toc">
     <h2>目录</h2>
-    <ol><li><a href="#s01"><span class="tocnum">01</span>为什么这两件事应当是一个系统</a></li><li><a href="#s02"><span class="tocnum">02</span>两份语料的真实构成</a></li><li><a href="#s03"><span class="tocnum">03</span>把设计稿变成可引用的知识资产</a></li><li><a href="#s04"><span class="tocnum">04</span>混合检索、大纲先行与分节证据</a></li><li><a href="#s05"><span class="tocnum">05</span>四层半拦截，其中三层不调模型</a></li><li><a href="#s06"><span class="tocnum">06</span>9.6 万字，怎么进一次 Prompt</a></li><li><a href="#s07"><span class="tocnum">07</span>调度是核心，Agent 是执行单元</a></li><li><a href="#s08"><span class="tocnum">08</span>把一句话变成执行计划</a></li><li><a href="#s09"><span class="tocnum">09</span>能力形状的产出，问题形状的答案</a></li><li><a href="#s10"><span class="tocnum">10</span>三处只有合并后才成立的能力</a></li><li><a href="#s11"><span class="tocnum">11</span>确定性优先，以及它的五次应用</a></li><li><a href="#s12"><span class="tocnum">12</span>Demo 要把过程摊开</a></li><li><a href="#s13"><span class="tocnum">13</span>已知边界与后续方向</a></li></ol>
+    <ol><li><a href="#s01"><span class="tocnum">01</span>系统概览：一份品宣稿支撑的两条链路</a></li><li><a href="#s02"><span class="tocnum">02</span>两份语料的真实构成</a></li><li><a href="#s03"><span class="tocnum">03</span>把设计稿变成可引用的知识资产</a></li><li><a href="#s04"><span class="tocnum">04</span>混合检索、大纲先行与分节证据</a></li><li><a href="#s05"><span class="tocnum">05</span>四层半拦截，其中三层不调模型</a></li><li><a href="#s06"><span class="tocnum">06</span>9.6 万字，怎么进一次 Prompt</a></li><li><a href="#s07"><span class="tocnum">07</span>调度是核心，Agent 是执行单元</a></li><li><a href="#s08"><span class="tocnum">08</span>把一句话变成执行计划</a></li><li><a href="#s09"><span class="tocnum">09</span>能力形状的产出，问题形状的答案</a></li><li><a href="#s10"><span class="tocnum">10</span>三处咬合：两条链路如何互相供给</a></li><li><a href="#s11"><span class="tocnum">11</span>确定性优先，以及它的五次应用</a></li><li><a href="#s12"><span class="tocnum">12</span>Demo 要把过程摊开</a></li><li><a href="#s13"><span class="tocnum">13</span>已知边界与后续方向</a></li></ol>
   </nav>
 </header>
 
 <section id="s01">
   <div class="rail"><span class="secnum">01</span><span class="raillabel">摘要</span></div>
   <div class="body">
-    <h2>为什么这两件事应当是一个系统</h2>
+    <h2>系统概览：一份品宣稿支撑的两条链路</h2>
 <p>
-      「用 RAG 写营销内容」与「用多 Agent 诊断官网」拆开各做各的，都能跑通。
-      但拆开会丢掉三处能力——它们不是把两个项目并排放置就能得到的，
-      而是<strong>只有当两条链路共享同一个知识库与同一套检索时才成立</strong>。
+      系统围绕一份品牌品宣稿展开：先把它构建成可检索、可引用的知识库，
+      再由两条链路共享这份知识库与同一套检索——一条对外生成内容，一条对内诊断官网。
+      <strong>共享是设计前提，不是结果</strong>：正因为两条链路吃的是同一份语料、
+      走的是同一套检索，它们才能互相供给，形成 §10 的三处咬合。
     </p>
 
     <div class="findings">
@@ -397,7 +398,7 @@
       <figcaption>
         <b>图 1</b>总体架构。两份语料<strong>不混进一个索引</strong>——知识库锚页码
         <span class="cite">P29</span>，站点锚 URL，混在一起后检索出证据却分不清该标什么，引用溯源即失效。
-        ①②③ 是两条链路的咬合处，它们各自消掉了一个拆开时无解的问题，详见 §06。
+        ①②③ 是两条链路互相供给的三个接口，各自解决一个单条链路无法自足的问题，详见 §10。
       </figcaption>
     </figure>
 
@@ -2463,7 +2464,7 @@
 <section id="s10">
   <div class="rail"><span class="secnum">10</span><span class="raillabel">咬合点</span></div>
   <div class="body">
-    <h2>三处只有合并后才成立的能力</h2>
+    <h2>三处咬合：两条链路如何互相供给</h2>
 <h3>① 审计标准：拿品牌自己的方法论去审它自己</h3>
     <p>
       诊断官网最难的不是找问题，是让结论站得住。初版写「官网无 JSON-LD，AI 无从识别实体」——
@@ -2483,7 +2484,7 @@
 
     <h3>② 原文问答：补上一条本该存在的路径</h3>
     <p>
-      原有四个 Agent 全是「通读全站 → 输出固定小节」的分析器，答不了指向具体内容的问题。
+      四个分析型 Agent 都是「通读全站 → 输出固定小节」的形态，答不了指向具体内容的问题。
       问「GEO 和 SEO 有什么区别」时，路由只能指向官网信息分析，而它的八个小节里没有一节是
       「官网对某个概念是怎么讲的」——<strong>答案就在已抓取的页面里，系统却没有路径把它取出来</strong>。
     </p>
