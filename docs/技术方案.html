@@ -413,15 +413,7 @@
       </figcaption>
     </figure>
 
-    <div class="note plain">
-      <span class="lab">一句话读懂三处咬合</span>
-      <p>
-        <strong>① 审计标准</strong>：拿品牌自己写的方法论，去审它自己的官网。<br>
-        <strong>② 原文问答</strong>：分析型 Agent 答不了「官网上这句话怎么说的」，检索能。<br>
-        <strong>③ 策略回灌</strong>：诊断说该补什么，写作链路直接把它补出来。
-      </p>
     </div>
-  </div>
 </section>
 
 <section id="s02">
@@ -638,20 +630,14 @@
     <div class="note warn">
       <span class="lab">最重的一条：元数据层与内容层脱节</span>
       <p>
-        <strong>全站 52 页的 <code>&lt;title&gt;</code> 去重后只有 1 种，meta description 也只有 1 种</strong>——
-        首页、<code>/about</code>、<code>/contact</code>、17 篇 blog、19 份行业报告，
-        全部共用「万悉科技-Trendee-LLM原生GEO生成式引擎优化平台」。
+        页面<em>内部</em>的标题体系是健全的，问题只出在最外层：
+        <strong>52 条标题在搜索结果里长得一模一样</strong>，
+        部分抓取管线会据此判定重复内容，AI 引用时也缺少简短准确的页面标识。
       </p>
       <p>
-        但必须说清楚<strong>问题的边界</strong>：页面<em>内部</em>的标题体系是健全的。
-        全站 59 个 <code>h1</code> 去重后有 58 个（<code>关于我们</code> / <code>Trendee智能体</code> /
-        各份报告标题…），加上 222 个 <code>h2</code>、410 个 <code>h3</code>，共 718 个标题标签，层级完整。
-      </p>
-      <p>
-        所以这不是「AI 读不懂页面」，而是<strong>最外层的标识没有随内容变化</strong>：
-        搜索结果列表里 52 条标题全一样、部分抓取管线会据此判定重复内容、
-        AI 引用时缺少简短准确的页面标识。深度抓取后 AI 仍能理解主题——
-        <strong>问题真实存在，但可修复成本很低</strong>（改 52 个 title 是一天的工作量）。
+        深度抓取后 AI 仍能理解主题——<strong>问题真实存在，但修复成本极低</strong>：
+        改 52 个 <code>title</code> 是一天的工作量。诊断要同时给出这两件事，
+        只报问题不报成本，等于把优先级判断推给客户。
       </p>
     </div>
 
@@ -1156,16 +1142,13 @@
     <div class="note warn">
       <span class="lab">踩坑 · 没有证据的环节不能碰事实</span>
       <p>
-        规划阶段最初会写带事实的导语，结果模型<strong>每次都给 GEO 编一个不同的英文全称</strong>：
-        Global Exposure Optimization / Generative Enterprise Optimization /
-        Generative Engine Optimization——只有最后一个是对的。
-        而材料 P12 明确写着「生成式引擎优化」。
+        规划阶段最初会写带事实的导语，结果模型每次给 GEO 编一个不同的英文全称
+        （Global Exposure Optimization…），而材料 <span class="cite">P12</span>
+        明确写着「生成式引擎优化」。根因是设计漏洞：<strong>让一个手里还没有资料的模型写了事实。</strong>
       </p>
       <p>
-        根因是设计漏洞：<strong>让一个手里还没有资料的模型写了事实</strong>。
-        现在 Prompt 明令规划阶段不得产出定义、数字、人名、功能清单，
-        <code>lead</code> 只写「导语应当覆盖什么」。这条推广开来是一条通则——
-        <strong>流水线里任何尚未拿到证据的环节，都不得触碰事实</strong>。
+        现在规划阶段不得产出定义、数字、人名与功能清单。这条推广开来是一条通则——
+        流水线里任何尚未拿到证据的环节，都不得触碰事实。
       </p>
     </div>
 
@@ -1264,15 +1247,12 @@
       <span class="lab">决定：维持 k = 4</span>
       <p>
         依据不是「4 最优」，而是<strong>数据不支持改动</strong>：质量维度在 k=2–8 全程平坦，
-        利用率倾向 k=3，而 k=3 的文章字数又是最低的——两个维度指向不同方向，
-        且样本量仅 2 主题 × 1 次。<strong>基于噪声修改一个站得住的默认值，
-        比保留它更糟。</strong>
+        利用率倾向 k=3，两个维度指向不同方向，且样本量仅 2 主题 × 1 次。
+        <strong>基于噪声修改一个站得住的默认值，比保留它更糟。</strong>
       </p>
       <p>
-        实验仍有正面收获：<strong>流水线在 k=2 至 8 全程未出现质量崩塌</strong>
-        （通过率 96–100%）。结合核查器已通过负向验证，说明幻觉控制在整个参数区间
-        都在生效，而非依赖某个特定配置侥幸成立。10 次运行中另有 1 次捏造编号被第 3 层拦下，
-        是纯代码层在真实运行（而非注入测试）中的一次实际拦截。
+        实验的真正收获在别处：k=2 至 8 全程未出现质量崩塌（通过率 96–100%），
+        说明幻觉控制在整个参数区间都在生效，而非依赖某个配置侥幸成立。
       </p>
     </div>
 
@@ -2260,7 +2240,7 @@
     </div>
 
     <div class="note plain">
-      <span class="lab">同一个错误犯了两次</span>
+      <span class="lab">同一类误判的两次发作</span>
       <p>
         「title 全站同质 = AI 读不懂页面」与「无 JSON-LD = AI 无从识别实体」，
         是同一类错误的两次发作：<strong>把 SEO 清单条目当作 GEO 事实断言</strong>。
@@ -2761,11 +2741,14 @@ PROVIDERS = {
     <div class="note warn">
       <span class="lab">依赖版本必须锁定</span>
       <p>
-        开发机为 <strong>Intel Mac（x86_64）</strong>，PyTorch 在 2.2.2 之后已停止支持该平台，
+        开发机为 Intel Mac（x86_64），PyTorch 在 2.2.2 之后停止支持该平台，
         而 2.2.2 又要求 <code>numpy&lt;2</code>、<code>transformers&lt;4.45</code>。
-        直接 <code>pip install sentence-transformers</code> 会装到不兼容组合并在导入时报
-        <code>NameError: name 'torch' is not defined</code>。实测可用组合：
-        numpy 1.26.4 / torch 2.2.2 / transformers 4.44.2 / sentence-transformers 2.7.0。
+        直接 <code>pip install sentence-transformers</code> 会装到不兼容组合，
+        并在导入时报 <code>NameError: name 'torch' is not defined</code>。
+      </p>
+      <p>
+        实测可用组合：numpy 1.26.4 / torch 2.2.2 / transformers 4.44.2 /
+        sentence-transformers 2.7.0，已写入 <code>requirements.txt</code>。
       </p>
     </div>
 
@@ -2825,11 +2808,11 @@ streamlit                       <span class="c"># Demo 界面</span></pre>
 └── README.md</pre>
 
     <div class="note good">
-      <span class="lab">评分对齐</span>
+      <span class="lab">为什么 Prompt 独立成文件</span>
       <p>
         <strong>Prompt 独立成 <code>.md</code> 文件</strong>，代码运行时读取。
         Prompt 的迭代频率远高于代码，独立文件远比散落在代码里的 f-string 直观——
-      改措辞无需重读业务逻辑，这是「Prompt 完整且可读」5 分的稳妥做法。
+      改措辞无需重读业务逻辑，也便于逐字审查模型到底收到了什么指令。
       </p>
     </div>
 <h3>复用与新增</h3>
