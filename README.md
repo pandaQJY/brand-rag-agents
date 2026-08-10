@@ -391,7 +391,7 @@ brand-rag-agents/
 ```
 
 <sub>上表略去 `__init__.py` 与少数辅助模块（`context.py`、`retrieve.py`、`search.py`、
-`preview.py`、`samples.py`、`registry.py`），完整结构见技术方案 §12。</sub>
+`preview.py`、`samples.py`、`registry.py`），完整结构见技术方案 §10。</sub>
 
 ---
 
