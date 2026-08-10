@@ -2778,15 +2778,50 @@ pydantic                        <span class="c"># 结构化输出校验</span>
 streamlit                       <span class="c"># Demo 界面</span></pre>
 
     <h3>工程结构</h3>
-<pre>RAG_writing/
-├── ingest/       parse.py  vision.py  chunk.py  build_index.py
-├── retrieval/    embedder.py  bm25.py  hybrid.py
-├── writer/       outline.py  generate.py  verify.py
-├── prompts/      *.md          <span class="c">← Prompt 独立成文件</span>
-├── data/         chunks.jsonl  faiss.index  page_images/
-├── llm.py        <span class="c">供应商适配层</span>
-├── app.py        <span class="c">Streamlit Demo</span>
-├── cli.py        <span class="c">命令行入口</span>
+<pre>brand-rag-agents/
+├── core/         config.py          <span class="c">全局路径、参数与品牌标识</span>
+│                 llm.py             <span class="c">供应商适配 + 按环节选型 + Prompt 加载</span>
+├── kb/           parse.py           <span class="c">文字层提取 + 阅读顺序恢复 + 页面渲染</span>
+│                 vision.py          <span class="c">视觉转写（断点续做）</span>
+│                 chunk.py           <span class="c">切分为检索单元</span>
+│                 preview.py         <span class="c">人工抽检对照页</span>
+│                 models.py          <span class="c">PageDoc / Chunk</span>
+├── retrieval/    corpus.py          <span class="k">← 语料抽象与 Indexable 协议</span>
+│                 embedder.py        <span class="c">bge-small-zh + FAISS</span>
+│                 bm25.py            <span class="c">jieba 分词 + BM25</span>
+│                 hybrid.py          <span class="c">RRF 融合；向量索引缺失时降级纯 BM25</span>
+│                 build_index.py     <span class="c">两份语料各建各的索引</span>
+│                 search.py  eval.py <span class="c">检索验证 / Hit@k · MRR 评测</span>
+├── writer/       intent.py          <span class="c">意图解析（规则优先、模型兜底）</span>
+│                 outline.py         <span class="c">大纲规划 + 分节查询 + 小节数校验</span>
+│                 retrieve.py        <span class="c">分节检索</span>
+│                 generate.py        <span class="c">生成 + 第 2、3 层拦截</span>
+│                 literal.py         <span class="c">第 3.5 层数字确定性校验</span>
+│                 verify.py          <span class="c">第 4 层事实核查</span>
+│                 content_types.py   <span class="c">四种内容类型的结构规格与数量区间</span>
+│                 samples.py         <span class="c">交付样例生成</span>
+│                 from_strategy.py   <span class="k">← 咬合 ③ 策略回灌写作链路</span>
+├── website/      fetch.py           <span class="c">抓取；标题进正文 + 全站模板剔除</span>
+│                 chunk.py           <span class="k">← 按 h2 分节切分</span>
+│                 models.py          <span class="c">页面数据结构</span>
+├── agents/       base.py            <span class="c">Agent 基类 + Blackboard</span>
+│                 context.py         <span class="c">上下文构建：大纲 / 预算 / 留痕</span>
+│                 router.py          <span class="c">三层路由 + 依赖解析 + 拓扑排序</span>
+│                 orchestrator.py    <span class="c">按序执行 + 失败降级</span>
+│                 site_analyst.py  geo_auditor.py
+│                 query_generator.py  content_strategist.py
+│                 site_qa.py         <span class="k">← 咬合 ② 原文问答</span>
+│                 synthesize.py      <span class="c">整合收口（不参与路由）</span>
+│                 registry.py        <span class="c">导入全部 Agent 以触发注册</span>
+│                 scan.py            <span class="c">确定性结构扫描（B 档）</span>
+│                 standard.py        <span class="k">← 咬合 ① 品宣稿自述标准（A 档）</span>
+├── prompts/      kb/  writer/  agents/        <span class="c">每个环节一个 .md</span>
+├── apps/         app_writer.py  app_agents.py  cli.py
+├── data/         chunks.jsonl  faiss.index    <span class="c">知识库衍生产物，随仓库交付</span>
+│                 SOURCE.md                    <span class="c">语料来源与重建方式</span>
+├── examples/     writing/  agents/            <span class="c">八份完整实跑记录</span>
+├── docs/         技术方案.html
+├── requirements.txt
 └── README.md</pre>
 
     <div class="note good">
@@ -2885,27 +2920,7 @@ streamlit                       <span class="c"># Demo 界面</span></pre>
       </p>
     </div>
 
-    <h3>目录结构</h3>
-<pre>GEO_agents/
-├── website/      fetch.py                     <span class="c">← 抓取；标题进正文 + 模板剔除</span>
-│                 models.py                    <span class="c">页面数据结构</span>
-├── agents/       base.py                      <span class="c">Agent 基类 + Blackboard</span>
-│                 context.py                   <span class="c">← 上下文构建：大纲 / 预算 / 留痕</span>
-│                 site_analyst.py  geo_auditor.py
-│                 query_generator.py  content_strategist.py
-│                 synthesize.py                <span class="c">← 整合收口（不参与路由）</span>
-│                 router.py                    <span class="c">路由 + 依赖解析 + 拓扑排序</span>
-│                 orchestrator.py              <span class="c">按序执行 + 失败降级</span>
-│                 scan.py                      <span class="c">确定性结构扫描（B 档）</span>
-│                 standard.py                  <span class="c">品宣稿自述标准（A 档）</span>
-├── prompts/agents/*.md                        <span class="c">← 每个环节一个，含 synthesize</span>
-├── data/site_pages.jsonl                      <span class="c">52 页抓取产物</span>
-│     site_boilerplate.json                    <span class="c">剔除的全站模板文案</span>
-│     site_scan.json                           <span class="c">结构扫描结果</span>
-├── config.py                                  <span class="c">路径 + 上下文预算</span>
-├── llm.py                                     <span class="c">供应商适配（与写作链路共用）</span>
-├── app_agents.py                              <span class="c">Streamlit 对话式 Demo</span>
-└── cli_agents.py                              <span class="c">命令行入口</span></pre>
+    
   </div>
 </section>
 

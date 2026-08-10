@@ -362,26 +362,36 @@ brand-rag-agents/
 │                 embedder.py        bge-small-zh + FAISS
 │                 bm25.py            jieba 分词 + BM25
 │                 hybrid.py          RRF 融合（向量索引缺失时降级纯 BM25）
+│                 build_index.py     两份语料各建各的索引
 │                 eval.py            Hit@k / MRR 评测
 ├── writer/       intent.py          意图解析（规则优先、模型兜底）
-│                 outline.py         大纲规划 + 分节查询
+│                 outline.py         大纲规划 + 分节查询 + 小节数校验
 │                 generate.py        生成 + 第 2、3 层拦截
 │                 literal.py         第 3.5 层数字确定性校验
 │                 verify.py          第 4 层事实核查
-│                 from_strategy.py   策略 → 成稿（打通点③）
+│                 content_types.py   四种内容类型的结构规格与数量区间
+│                 from_strategy.py   策略 → 成稿（咬合 ③）
 ├── website/      fetch.py           抓取；标题进正文 + 全站模板剔除
 │                 chunk.py           按 h2 分节切分
 ├── agents/       base.py            Agent 基类 + Blackboard
 │                 router.py          三层路由 + 依赖解析 + 拓扑排序
 │                 orchestrator.py    按序执行 + 失败降级
-│                 site_qa.py         原文问答（打通点②）
-│                 standard.py        品宣稿自述标准 → A 档（打通点①）
+│                 site_analyst.py  geo_auditor.py
+│                 query_generator.py  content_strategist.py
+│                 synthesize.py      整合收口（不参与路由）
+│                 site_qa.py         原文问答（咬合 ②）
+│                 standard.py        品宣稿自述标准 → A 档（咬合 ①）
 │                 scan.py            确定性结构扫描（B 档）
 ├── prompts/      kb/ writer/ agents/    每个环节一个 .md
 ├── apps/         app_writer.py  app_agents.py  cli.py
-├── examples/     writing/ agents/       实跑输入输出记录
-└── docs/                                完整设计说明
+├── data/         chunks.jsonl  faiss.index    知识库衍生产物，随仓库交付
+│                 SOURCE.md                    语料来源与重建方式
+├── examples/     writing/ agents/             八份完整实跑记录
+└── docs/         技术方案.html                13 节 / 16 图
 ```
+
+<sub>上表略去 `__init__.py` 与少数辅助模块（`context.py`、`retrieve.py`、`search.py`、
+`preview.py`、`samples.py`、`registry.py`），完整结构见技术方案 §12。</sub>
 
 ---
 
