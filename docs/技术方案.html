@@ -303,10 +303,8 @@
       <span class="lab">本方案的一条主线</span>
       <p>
         <strong>凡能用确定性方法裁决的，就不该交给模型。</strong>
-        这条判据在系统里出现了五次：引用编号校验、数字比对、结构扫描、依赖拓扑排序、大纲小节数校验。
-        每一次的收益都相同——零成本、零波动、结果可复现。
-        它也解释了本方案的大部分取舍：为什么不用框架、为什么输出不用 JSON、
-        为什么核查要分层而不是交给一次大模型调用。
+        这条判据在系统里反复出现，也解释了本方案的大部分取舍：为什么不用框架、
+        为什么输出不用 JSON、为什么核查要分层而不是交给一次大模型调用。五处应用详见 §10。
       </p>
     </div>
 <p>
@@ -1227,15 +1225,7 @@
       </table>
     </div>
 
-    <div class="note warn">
-      <span class="lab">假设未被数据支持</span>
-      <p>
-        原假设是「证据给多了模型会挪用 → 风险声明随 k 上升」。
-        实测风险声明为 <strong>0 / 0.5 / 0 / 0 / 0.5</strong>——<strong>无任何趋势</strong>，
-        在每个 k 仅 2 个样本的量级下属于纯噪声。<strong>该假设不成立，
-        本次调优未能得出质量维度的结论。</strong>
-      </p>
-    </div>
+    
 
     <p>
       唯一呈单调规律的是<strong>证据利用率</strong>，且它是机械性的、不受生成随机性影响：
@@ -1246,12 +1236,12 @@
     <div class="note good">
       <span class="lab">决定：维持 k = 4</span>
       <p>
-        依据不是「4 最优」，而是<strong>数据不支持改动</strong>：质量维度在 k=2–8 全程平坦，
-        利用率倾向 k=3，两个维度指向不同方向，且样本量仅 2 主题 × 1 次。
+        原假设「证据给多了模型会挪用」未被数据支持：风险声明在 k=2–8 全程为 0 或 0.5，无任何趋势。
+        质量维度平坦、利用率倾向 k=3，两个维度互相矛盾，而样本量仅 2 主题 × 1 次。
         <strong>基于噪声修改一个站得住的默认值，比保留它更糟。</strong>
       </p>
       <p>
-        实验的真正收获在别处：k=2 至 8 全程未出现质量崩塌（通过率 96–100%），
+        真正的收获在别处：k=2 至 8 全程未出现质量崩塌（通过率 96–100%），
         说明幻觉控制在整个参数区间都在生效，而非依赖某个配置侥幸成立。
       </p>
     </div>
@@ -1999,7 +1989,7 @@
       <figcaption>
         <b>图 13</b>四个方框的顺序即是设计重心：<strong>路由与依赖解析在 Agent 之前</strong>。
         Blackboard 不只是传参通道——它使连续追问时无需重跑已完成的 Agent，
-        这是「支持连续追问」这一加分项的实现基础。
+        这是连续追问得以复用中间结果的基础。
         底部的整合收口是<strong>编排器的固定动作而非第五个 Agent</strong>——
         它不参与路由、用户点名也调不到，作用是把能力形状的产出对齐回问题形状（详见 §09）。
       </figcaption>
@@ -2184,17 +2174,16 @@
       行业里大量「GEO 最佳实践」其实是从 SEO 直接搬来的推测。
     </p>
 
-    <div class="note warn">
-      <span class="lab">但换一个判据，这条诊断就成立了</span>
+    <div class="note good">
+      <span class="lab">A 档判据：按客户自己写的标准去审</span>
       <p>
-        品宣稿 <span class="cite">P29</span>《2.2 GEO-原生网站基建能力》原文：
-        「网站通过<strong>结构化数据格式（JSON-LD）</strong>、内部知识图谱建立……让AI快速抓取、
-        理解并引用网站核心内容」，并声称带来三项效果：RAG检索速度提高、提升AI引用率、AI理解准确度提升。
+        品宣稿 <span class="cite">P29</span> 把 JSON-LD 列为「GEO-原生网站基建能力」的首要一项，
+        <strong>而官网 52 个页面覆盖率为 0</strong>。
       </p>
       <p>
-        <strong>而万悉官网 52 个页面，JSON-LD 覆盖率为 0。</strong>
-        这就不再是「我认为你该加 schema」，而是<strong>「按你们自己写的标准，官网没做到」</strong>——
-        判据来自客户自述，无法被反驳，除非承认自己的方法论有问题。
+        这就不再是「我建议你加 schema」，而是「按你们自己写的标准，官网没做到」——
+        除非承认方法论有问题，否则无法反驳。实现上 <code>agents/standard.py</code>
+        读取知识库产出的 <code>chunks.jsonl</code> 作为标准库，实测抽出 4 条标准、升格 3 条结论为 A 档。
       </p>
     </div>
 
@@ -2226,18 +2215,7 @@
       </table>
     </div>
 
-    <div class="note good">
-      <span class="lab">这是两条链路真正的咬合点</span>
-      <p>
-        A 档判据意味着：<strong>用品宣稿知识库作为审计标准，去审这家公司的官网。</strong>
-        两条链路不是并列的两件事，而是一套互相咬合的系统——
-        品宣稿定义了「这家公司认为 GEO 该怎么做」，官网则是「它自己做到了多少」。
-      </p>
-      <p>
-        实现上，<code>agents/standard.py</code> 读取知识库产出的
-        <code>chunks.jsonl</code> 作为标准库；未构建知识库时自动降级为仅 B/C 档诊断。
-      </p>
-    </div>
+    
 
     <div class="note plain">
       <span class="lab">同一类误判的两次发作</span>
@@ -2273,17 +2251,7 @@
       诊断官网最难的不是找问题，是让结论站得住。初版写「官网无 JSON-LD，AI 无从识别实体」——
       这站不住，大模型读纯文本毫无障碍，JSON-LD 对 AI 检索管线的加权作用并无公开确证。
     </p>
-    <div class="note good">
-      <span class="lab">换判据之后</span>
-      <p>
-        <strong>品牌方自己的方法论把 JSON-LD 列为 GEO 网站基建的首要能力</strong>
-        （品宣稿 <span class="cite">P29</span>），<strong>而官网 52 页覆盖率为 0。</strong>
-      </p>
-      <p>
-        这不是「我建议你加 schema」，而是「按你们自己写的标准，官网没做到」——
-        除非承认方法论有问题，否则无法反驳。实测抽出 4 条标准，升格 3 条结论为 A 档。
-      </p>
-    </div>
+    
   </div>
 </section>
 
@@ -2741,14 +2709,10 @@ PROVIDERS = {
     <div class="note warn">
       <span class="lab">依赖版本必须锁定</span>
       <p>
-        开发机为 Intel Mac（x86_64），PyTorch 在 2.2.2 之后停止支持该平台，
-        而 2.2.2 又要求 <code>numpy&lt;2</code>、<code>transformers&lt;4.45</code>。
-        直接 <code>pip install sentence-transformers</code> 会装到不兼容组合，
+        开发机为 Intel Mac，PyTorch 2.2.2 之后停止支持该平台，而 2.2.2 又要求
+        <code>numpy&lt;2</code>、<code>transformers&lt;4.45</code>——直接安装会装到不兼容组合，
         并在导入时报 <code>NameError: name 'torch' is not defined</code>。
-      </p>
-      <p>
-        实测可用组合：numpy 1.26.4 / torch 2.2.2 / transformers 4.44.2 /
-        sentence-transformers 2.7.0，已写入 <code>requirements.txt</code>。
+        实测可用组合已锁进 <code>requirements.txt</code>。
       </p>
     </div>
 
@@ -2883,15 +2847,7 @@ streamlit                       <span class="c"># Demo 界面</span></pre>
       </p>
     </div>
 
-    <div class="note warn">
-      <span class="lab">但必须主动说明，不能默默偏离</span>
-      <p>
-        <strong>不用框架不等于不懂框架。</strong>既然框架是常见默认选择，
-      偏离而不解释是最差的做法——容易被直接理解为「不会用」。
-        因此本节的三条理由会同样写入 README 的「技术选型说明」，
-        <strong>把一个潜在减分项转为对工程判断力的展示</strong>。
-      </p>
-    </div>
+    
 
     <div class="note plain">
       <span class="lab">一个不做向量检索的决定</span>
