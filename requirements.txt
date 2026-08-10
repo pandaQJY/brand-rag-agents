@@ -1,0 +1,30 @@
+# ── 模型调用 ────────────────────────────────────────────────
+# DeepSeek 与通义千问（兼容模式）共用 OpenAI 接口，仅 base_url 不同
+openai>=1.40
+python-dotenv>=1.0
+
+# ── PDF 解析与页面渲染 ──────────────────────────────────────
+pymupdf>=1.24
+
+# ── 检索 ────────────────────────────────────────────────────
+# 版本区间是实测结果，不可随意放宽：
+#   开发机为 Intel Mac(x86_64)，PyTorch 于 2.2.2 后停止支持该平台，
+#   而 torch 2.2.2 要求 numpy<2；transformers>=4.45 与之不兼容
+#   （表现为 import 时 NameError: name 'torch' is not defined）。
+#   实测可用组合：numpy 1.26.4 / torch 2.2.2 / transformers 4.44.2 /
+#                 sentence-transformers 2.7.0
+numpy<2
+transformers>=4.36,<4.45
+sentence-transformers>=2.7,<3
+faiss-cpu>=1.8
+jieba>=0.42
+rank-bm25>=0.2
+
+# ── 官网抓取 ────────────────────────────────────────────────
+httpx>=0.27
+beautifulsoup4>=4.12
+lxml>=5.0             # bs4 的解析后端
+
+# ── 数据结构与界面 ──────────────────────────────────────────
+pydantic>=2.0
+streamlit>=1.30

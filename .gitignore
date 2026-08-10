@@ -1,0 +1,47 @@
+# 凭证 —— 绝不进版本库
+.env
+.env.local
+
+# 运行期环境
+.venv/
+__pycache__/
+*.pyc
+
+# macOS
+.DS_Store
+
+# ── 第三方原始素材：不入库，按需重建 ────────────────────────
+#
+# 分析对象的品宣稿与官网内容属于该公司，本项目仅用于技术验证，
+# 因此原始素材不进版本库。两者都能由脚本重建：
+#
+#   品宣 PDF      自行放入 data/source/brand_deck.pdf
+#   官网全部语料  python -m website.fetch && python -m website.chunk
+#                 && python -m retrieval.build_index -c site
+#                 零 API 成本，全程约 1 分钟
+#
+# 站点语料的**全部**衍生物都排除，而知识库的衍生物保留——判据是重建成本：
+# 站点重建免费且一分钟内完成，知识库重建需要 42 次视觉转写 API 调用。
+# 只排除 site_pages.jsonl 而保留 site_chunks.jsonl 是自欺欺人，
+# 后者装着同样的正文。
+data/source/
+data/site_pages.jsonl
+data/site_boilerplate.json
+data/site_chunks.jsonl
+data/site_faiss.index
+data/site_faiss_ids.txt
+
+# 页面渲染图 8MB，仅在重跑视觉转写时才需要，可由 kb.parse 重建
+data/page_images/
+
+# ── 以下衍生产物随仓库交付，故不 ignore ──────────────────────
+#
+#   data/pages.jsonl     逐页解析结果（含视觉转写）
+#   data/chunks.jsonl    39 个检索单元
+#   data/faiss.index     知识库向量索引
+#   data/site_scan.json  结构扫描结果——只有统计量，不含正文
+#   data/preview.html    视觉转写人工抽检对照页
+#   examples/            实跑输入输出记录
+#
+# 它们本可由代码重建，但重建 pages.jsonl 需要 42 次视觉转写 API 调用——
+# 克隆下来应当能直接运行，而不是先付一笔钱。这点体积换开箱即跑值得。

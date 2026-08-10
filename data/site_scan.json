@@ -1,0 +1,144 @@
+[
+  {
+    "key": "title_uniqueness",
+    "title": "title 标签全站同质",
+    "grade": "B",
+    "severity": "high",
+    "fact": "52 个页面的 <title> 去重后仅 1 种",
+    "detail": "全部为「万悉科技-Trendee-LLM原生GEO生成式引擎优化平台」。搜索结果列表中无法区分，部分抓取管线会据此判定重复内容。注意这是元数据层问题，页面内部标题结构另行评估。",
+    "pages": []
+  },
+  {
+    "key": "meta_uniqueness",
+    "title": "meta description 全站同质",
+    "grade": "B",
+    "severity": "high",
+    "fact": "52 个页面的 meta description 去重后仅 1 种",
+    "detail": "页面摘要无差异，AI 抓取时无法据此区分内容主题。",
+    "pages": []
+  },
+  {
+    "key": "jsonld",
+    "title": "全站无 JSON-LD 结构化标记",
+    "grade": "B",
+    "severity": "high",
+    "fact": "52 个页面中 JSON-LD 覆盖数为 0",
+    "detail": "结构化标记的作用在检索层——实体消歧、知识图谱收录、问答对抽取。其对 AI 检索管线的加权作用无公开确证，但与品宣稿自述标准的冲突可由 standard.py 判定为 A 档。",
+    "pages": []
+  },
+  {
+    "key": "h1_anomaly",
+    "title": "h1 数量异常的页面",
+    "grade": "B",
+    "severity": "medium",
+    "fact": "5/52 页的 h1 数量不为 1",
+    "detail": "/ h1×0；/blog/geo-optimization-ai-visibility-brand-awareness-wanxi h1×2；/blog/geo-provider-selection-pitfalls-brand-diagnosis-data-execution h1×2；/blog/overseas-geo-multilingual-content-ai-search h1×8；/ h1×0",
+    "pages": [
+      "/",
+      "/blog/geo-optimization-ai-visibility-brand-awareness-wanxi",
+      "/blog/geo-provider-selection-pitfalls-brand-diagnosis-data-execution",
+      "/blog/overseas-geo-multilingual-content-ai-search",
+      "/"
+    ]
+  },
+  {
+    "key": "url_canonical",
+    "title": "URL 规范化",
+    "grade": "B",
+    "severity": "medium",
+    "fact": "检出 1 组同内容多 URL",
+    "detail": "https://www.wanxitech.cn/ ↔ https://wanxitech.cn/",
+    "pages": []
+  },
+  {
+    "key": "content_depth",
+    "title": "身份信息厚度倒挂",
+    "grade": "B",
+    "severity": "medium",
+    "fact": "身份页均 235 字（3 页），blog 均 3392 字（16 篇）",
+    "detail": "当用户问 AI「这家公司是做什么的」，官方可提供的素材反而最少。",
+    "pages": [
+      "/geo-agent（45字）",
+      "/contact（153字）",
+      "/about（507字）"
+    ]
+  },
+  {
+    "key": "faq_structure",
+    "title": "问答式结构覆盖不足",
+    "grade": "B",
+    "severity": "medium",
+    "fact": "14/52 页含页面独有的问句式标题（共 55 个）",
+    "detail": "另有 1 句为全站模板重复（如出现 52 次的营销标语），已剔除不计。问答式结构集中在 blog，而产品与服务页缺失——客户最可能向 AI 提问的正是后者。",
+    "pages": [
+      "/",
+      "/blog",
+      "/blog/case-study-knowledge-infrastructure-ai-cognition",
+      "/blog/geo-for-taobao-brands-ai-shopping-visibility",
+      "/blog/geo-guide-amazon-sellers-alexa-for-shopping-ai-priority",
+      "/blog/geo-optimization-ai-visibility-brand-awareness-wanxi",
+      "/blog/geo-provider-selection-pitfalls-brand-diagnosis-data-execution",
+      "/blog/trendee-technology-building-an-llm-native-geo-system-reshaping-the-brand-content-ecosystem-in-the-ai-era",
+      "/blog/why-ai-cant-find-your-content-manufacturing-geo-case",
+      "/blog/why-listed-company-paused-geo-after-20-interviews"
+    ]
+  },
+  {
+    "key": "internal_link",
+    "title": "内容页之间缺乏实质内链",
+    "grade": "B",
+    "severity": "medium",
+    "fact": "41 个内容页之间仅 80 条互链（页均 2.0 条），其中 25 页无任何内容页出链",
+    "detail": "已排除 10 个全局导航目标——导航链接对实体关联无贡献。内容页互不引用，AI 难以建立产品、案例、FAQ 之间的语义关系。",
+    "pages": [
+      "/geo-center/reports/%E6%9D%83%E5%A8%81%E5%8F%91%E5%B8%832026%E6%96%B0%E8%83%BD%E6%BA%90%E6%B1%BD%E8%BD%A6-geo-%E7%94%9F%E6%88%90%E5%BC%8F%E5%BC%95%E6%93%8E%E4%BC%98%E5%8C%96%E8%A1%8C%E4%B8%9A%E8%A7%82%E5%AF%9F%E6%8A%A5%E5%91%8Aai-%E6%90%9C%E7%B4%A2%E6%97%B6%E4%BB%A3%E7%9A%84%E5%93%81%E7%89%8C%E5%8F%AF%E8%A7%81%E6%80%A7%E9%87%8D%E5%A1%91%E9%99%90%E6%97%B6%E5%85%8D%E8%B4%B9%E9%A2%86%E5%8F%96",
+      "/geo-center/reports/%E6%9D%83%E5%A8%81%E5%8F%91%E5%B8%832026%E6%99%BA%E8%83%BD%E5%AE%B6%E5%85%B7-geo-%E7%94%9F%E6%88%90%E5%BC%8F%E5%BC%95%E6%93%8E%E4%BC%98%E5%8C%96%E8%A1%8C%E4%B8%9A%E8%A7%82%E5%AF%9F%E6%8A%A5%E5%91%8Aai-%E6%90%9C%E7%B4%A2%E6%97%B6%E4%BB%A3%E7%9A%84%E5%93%81%E7%89%8C%E5%8F%AF%E8%A7%81%E6%80%A7%E9%87%8D%E5%A1%91%E9%99%90%E6%97%B6%E5%85%8D%E8%B4%B9%E9%A2%86%E5%8F%96",
+      "/geo-center/reports/2026%E5%A5%B3%E8%A3%85%E8%A1%8C%E4%B8%9Ageo%E4%BC%98%E5%8C%96%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88%E6%9D%83%E5%A8%81%E5%8F%91%E5%B8%83%E9%99%90%E6%97%B6%E5%85%8D%E8%B4%B9%E9%A2%86%E5%8F%96",
+      "/geo-center/reports/2026-geo-brand-reports",
+      "/geo-center/reports/iresearch-2026-geo-industry-report-trendee-llm-native-standard",
+      "/geo-center/whitepapers/2026-geo-whitepaper",
+      "/geo-center/whitepapers/trendee-llm-native-geo-originator",
+      "/geo-center/reports/%E9%99%90%E6%97%B6%E5%85%8D%E8%B4%B92026%E6%88%B7%E5%A4%96%E8%A3%85%E5%A4%87%E5%93%81%E7%89%8Cai%E7%AA%81%E5%9B%B4%E6%88%98geo%E8%A1%8C%E4%B8%9A%E8%A7%82%E5%AF%9F%E6%8A%A5%E5%91%8A%E9%99%84%E4%B8%8B%E8%BD%BD%E9%80%9A%E9%81%93",
+      "/geo-center/reports/2026%E5%B9%B4%E5%85%A8%E7%90%833c%E7%94%B5%E5%AD%90geo%E8%A1%8C%E4%B8%9A%E8%A7%82%E5%AF%9F%E6%8A%A5%E5%91%8A",
+      "/geo-center/videos/llm-native-geo-course"
+    ]
+  },
+  {
+    "key": "image_alt",
+    "title": "图片 alt 文本缺失",
+    "grade": "C",
+    "severity": "medium",
+    "fact": "150/545 张图片缺少 alt（28%）",
+    "detail": "alt 对大模型理解图像内容的实际影响缺乏公开确证，此项列为 C 档建议而非确定缺陷。",
+    "pages": [
+      "/",
+      "/about",
+      "/blog",
+      "/blog/trendee-technology-building-an-llm-native-geo-system-reshaping-the-brand-content-ecosystem-in-the-ai-era",
+      "/contact",
+      "/geo-agent",
+      "/geo-center",
+      "/geo-center/reports",
+      "/geo-center/reports/%E6%9D%83%E5%A8%81%E5%8F%91%E5%B8%832026%E6%96%B0%E8%83%BD%E6%BA%90%E6%B1%BD%E8%BD%A6-geo-%E7%94%9F%E6%88%90%E5%BC%8F%E5%BC%95%E6%93%8E%E4%BC%98%E5%8C%96%E8%A1%8C%E4%B8%9A%E8%A7%82%E5%AF%9F%E6%8A%A5%E5%91%8Aai-%E6%90%9C%E7%B4%A2%E6%97%B6%E4%BB%A3%E7%9A%84%E5%93%81%E7%89%8C%E5%8F%AF%E8%A7%81%E6%80%A7%E9%87%8D%E5%A1%91%E9%99%90%E6%97%B6%E5%85%8D%E8%B4%B9%E9%A2%86%E5%8F%96",
+      "/geo-center/reports/%E6%9D%83%E5%A8%81%E5%8F%91%E5%B8%832026%E6%99%BA%E8%83%BD%E5%AE%B6%E5%85%B7-geo-%E7%94%9F%E6%88%90%E5%BC%8F%E5%BC%95%E6%93%8E%E4%BC%98%E5%8C%96%E8%A1%8C%E4%B8%9A%E8%A7%82%E5%AF%9F%E6%8A%A5%E5%91%8Aai-%E6%90%9C%E7%B4%A2%E6%97%B6%E4%BB%A3%E7%9A%84%E5%93%81%E7%89%8C%E5%8F%AF%E8%A7%81%E6%80%A7%E9%87%8D%E5%A1%91%E9%99%90%E6%97%B6%E5%85%8D%E8%B4%B9%E9%A2%86%E5%8F%96"
+    ]
+  },
+  {
+    "key": "heading_health",
+    "title": "内容层标题结构",
+    "grade": "B",
+    "severity": "ok",
+    "fact": "全站 718 个标题标签，h1 去重 58/59",
+    "detail": "层级分布：h1×59 / h2×222 / h3×410 / h4×27。内容层结构健全，与元数据层同质问题应分开评估。",
+    "pages": []
+  },
+  {
+    "key": "knowledge_graph",
+    "title": "实体关联",
+    "grade": "B",
+    "severity": "ok",
+    "fact": "3/3 个实体页被 blog/news 正文引用",
+    "detail": "注：真正的知识图谱无法从 HTML 直接测出，此处测的是必要条件——若案例与产品页从未被正文引用，则不存在实体语义关系网络。 /about：26 次； /geo-agent：26 次； /contact：26 次；",
+    "pages": []
+  }
+]
