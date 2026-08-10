@@ -133,7 +133,16 @@ def parse_outline(text: str) -> Outline:
 
 
 def plan(topic: str, content_type: str = "官网Blog", provider: str | None = None) -> Outline:
-    """生成大纲。内容类型的结构规格来自 writer/content_types.py。"""
+    """生成大纲，并校验小节数量落在该内容类型的规格区间内。
+
+    为什么要校验：数量约束原先只写在 Prompt 里。实测同一条 FAQ 指令两次规划，
+    一次 7 个问题、一次 3 个——而规格明写「6–10 个问题」。模型违反了自己收到的
+    约束，而系统照单全收，直接拿 3 节的大纲往下跑完整条链路。
+
+    处置方式是**重试一次而非报错**：小节偏少不影响正确性，只影响完整度，
+    为此中断整条链路不值当。重试仍不达标就带警告继续——把判断留给人，
+    与第 3.5 层「标出来交给人」的处置一致。
+    """
     spec = get_spec(content_type)
     prompt = load_prompt(
         "writer/outline",
@@ -143,8 +152,27 @@ def plan(topic: str, content_type: str = "官网Blog", provider: str | None = No
         type_guide=spec.outline_guide,
         catalog=build_catalog(),
     )
-    raw = chat([{"role": "user", "content": prompt}], provider=provider, task="outline", max_tokens=2048)
-    return parse_outline(raw)
+
+    outline = None
+    for attempt in range(2):
+        raw = chat(
+            [{"role": "user", "content": prompt}], provider=provider, task="outline", max_tokens=2048
+        )
+        outline = parse_outline(raw)
+        n = len(outline.sections)
+        if spec.min_sections <= n <= spec.max_sections:
+            return outline
+        if attempt == 0:
+            print(
+                f"⚠ 大纲规划出 {n} 个{spec.section_word}，规格要求 "
+                f"{spec.min_sections}–{spec.max_sections} 个，重试一次…"
+            )
+
+    print(
+        f"⚠ 重试后仍为 {len(outline.sections)} 个{spec.section_word}"
+        f"（规格 {spec.min_sections}–{spec.max_sections}），按现有大纲继续。"
+    )
+    return outline
 
 
 def main() -> None:

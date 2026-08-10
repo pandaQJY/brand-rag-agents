@@ -21,6 +21,16 @@ class ContentTypeSpec:
     outline_guide: str  # 注入 prompts/outline.md
     generate_guide: str  # 注入 prompts/generate.md
 
+    # 小节数量的合理区间。**必须与 outline_guide 里写给模型的数字一致**——
+    # 两处分别维护迟早会漂移，届时代码会按一套标准去校验模型收到的另一套标准。
+    #
+    # 为什么要有这一对字段：数量约束原先只写在 Prompt 里，无人校验。
+    # 实测同一条指令两次规划，一次 7 节、一次 3 节，而 FAQ 规格明写「6–10 个问题」——
+    # 模型违反了自己收到的约束，系统却毫无察觉，直接拿 3 节的大纲往下走。
+    # 数量是纯确定性判据，正属于「不该交给模型裁决」的那一类。
+    min_sections: int = 3
+    max_sections: int = 12
+
 
 BLOG = ContentTypeSpec(
     name="官网Blog",
@@ -52,6 +62,8 @@ BLOG = ContentTypeSpec(
 - 每节 200–400 字，成段散文，不要罗列短句。
 - 结尾 2–3 句收束，可自然引向了解产品，但不写成硬广。
 - 若未提供 FAQ 问题，则省略「常见问题」整节。""",
+    min_sections=3,
+    max_sections=5,
 )
 
 FAQ = ContentTypeSpec(
@@ -83,6 +95,8 @@ FAQ = ContentTypeSpec(
 - 每个答案 2–4 句，直接回答，第一句就给结论，不要铺垫。
 - 答案之间彼此独立，不要出现「如前所述」「上文提到」这类互相引用。
 - 不写结尾总结段。""",
+    min_sections=6,
+    max_sections=10,
 )
 
 BRAND = ContentTypeSpec(
@@ -111,6 +125,8 @@ BRAND = ContentTypeSpec(
 - 语气克制专业，用事实和实绩说话，不用「行业领先」「颠覆」这类自夸词——
   除非证据里确有第三方背书，那就引用它。
 - 结尾一句话收束即可，不要号召性口号。""",
+    min_sections=3,
+    max_sections=4,
 )
 
 PRODUCT = ContentTypeSpec(
@@ -141,6 +157,8 @@ PRODUCT = ContentTypeSpec(
 - 每个模块先用 1–2 句说清它解决什么问题，再用要点列出具体能力。
 - **允许使用要点列表**（这是产品介绍与 Blog 的主要区别），但每条要点也需引用。
 - 不写导语式铺垫，不写结尾总结。""",
+    min_sections=3,
+    max_sections=5,
 )
 
 SPECS: dict[str, ContentTypeSpec] = {s.name: s for s in (BLOG, FAQ, BRAND, PRODUCT)}

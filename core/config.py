@@ -16,6 +16,9 @@ from pathlib import Path
 os.environ.setdefault("KMP_DUPLICATE_LIB_OK", "TRUE")
 # 单线程可进一步避免线程池争用；语料仅数十条，无性能影响。
 os.environ.setdefault("OMP_NUM_THREADS", "1")
+# tokenizers 在 fork 后会打印一段并行警告。检索路径本就不依赖其并行，
+# 显式关掉，免得每次运行都在正常输出里混进四行无关提示。
+os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
 
 # core/ 的上一级即仓库根目录
 BASE_DIR = Path(__file__).resolve().parent.parent
