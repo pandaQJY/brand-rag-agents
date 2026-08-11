@@ -817,7 +817,7 @@
           <text class="s-lab" x="702" y="91" text-anchor="middle">bge-small-zh</text>
 
           <rect class="s-box" x="646" y="124" width="112" height="44" rx="4"/>
-          <text class="s-t" x="702" y="145" text-anchor="middle">BM25 倒排索引</text>
+          <text class="s-t" x="702" y="145" text-anchor="middle">BM25 关键词检索</text>
           <text class="s-lab" x="702" y="159" text-anchor="middle">jieba 分词</text>
 
           <!-- offline arrows -->
@@ -1329,7 +1329,17 @@
       </figcaption>
     </figure>
 
-<h3>语料抽象：一套检索服务两份语料</h3>
+<div class="note plain">
+      <span class="lab">BM25 这一路的实现边界</span>
+      <p>
+        用的是 <code>rank_bm25</code>，<strong>全量内存打分，不落盘、也没有倒排表</strong>——
+        它逐个查询词扫过全部文档算分，复杂度 O(N×|query|)，而真正的倒排索引是 O(命中文档数)。
+        当前两份语料 38 / 193 条，建索引 0.5 秒、单次检索 0.4 毫秒，引入倒排结构没有收益。
+        <strong>语料上到十万级时这里必须换掉</strong>，这是当前规模下的取舍，不是终态。
+      </p>
+    </div>
+
+    <h3>语料抽象：一套检索服务两份语料</h3>
 <p>
   检索层不认识具体的语料类型，只依赖一个协议——「有 <code>chunk_id</code>、
   能给出 <code>index_text()</code>、能报出自己的引用锚点」。
@@ -1890,7 +1900,34 @@
         一个不知道的模型会自信地判「不存在」——而后者的错误无法从输出上被发现。
       </p>
     </div>
-<h3>站点语料的切分：为什么反过来按 h2 分节</h3>
+<h3>摘要由四部分构成，每部分回答一个不同的问题</h3>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>部分</th><th class="num">字数</th><th>回答什么</th><th>为什么这么给</th></tr></thead>
+        <tbody>
+          <tr><td><strong>全站标题大纲</strong></td><td class="num">16,582</td>
+              <td>官网<strong>有没有</strong>讲 X</td>
+              <td>51 页全部露面，层级保留；同样预算做正文样本只覆盖得了 8 页</td></tr>
+          <tr><td>全站模板文案</td><td class="num">375</td>
+              <td>公告条、页脚、备案号</td>
+              <td>每页重复出现，此处只列一次——它是品牌表达的一部分，但不该在 51 页里各读一遍</td></tr>
+          <tr><td>品牌身份页正文</td><td class="num">4,064</td>
+              <td>这家公司<strong>自称</strong>是谁</td>
+              <td>给原话不给摘要：「致力于让每一家中国全球化的企业被 AI 看见」这类定位陈述，转述一次就变味</td></tr>
+          <tr><td>各板块正文样本</td><td class="num">9,712</td>
+              <td>这个站<strong>怎么说话</strong></td>
+              <td>覆盖已由大纲兜住，样本只用来判断表达方式，每板块 3 篇代表作足矣</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>
+      摘要开头还有两行元信息：全站页数与字数，以及一句约定——
+      <strong>以 ▮ 开头的行是清单的分节标记，正文里的 # 号标题是页面自身的结构</strong>。
+      抓取时把页面标题收进了正文，正文里本来就有 <code>##</code>；不声明这个约定，
+      模型分不清哪个是页面边界、哪个是页内层级。
+    </p>
+
+    <h3>站点语料的切分：为什么反过来按 h2 分节</h3>
 <p>知识库以页为单位，因为幻灯片本身就是设计好的语义块。网页不是——一篇 5,760 字的 Blog 是连续文档，整页做成一个检索单元能命中它，却无法指出<strong>答案在哪一段</strong>，而站点语料的用途恰恰是回答「官网上关于 X 是怎么说的」。</p><p>实测依据很具体：首页 3,508 字、62 个标题，其中就包含「GEO 与 SEO 的区别」那组 FAQ。整页一个单元时它被淹没在另外六十多个标题里；按 h2 切开后成为独立单元，检索可直接命中。52 页最终切成 193 个单元，26 页被切成多节。</p>
   </div>
 </section>
@@ -2226,7 +2263,34 @@
         少了问题生成，诊断就只能停留在结构层面，无法回答「客户想知道的，官网讲了没有」。
       </p>
     </div>
-<h3>第五个 Agent：原文问答</h3>
+<h3>两类输入：分析吃摘要，问答吃检索</h3>
+    <p>
+      六个环节的输入只有两种来源，分野不在实现难度，而在<strong>任务形态</strong>：
+    </p>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>环节</th><th>输入</th><th>为什么是它</th></tr></thead>
+        <tbody>
+          <tr><td>官网信息分析</td><td>全站摘要 3 万字</td><td>要通读全站建立品牌基线，需要全局覆盖</td></tr>
+          <tr><td>GEO 诊断</td><td>上游基线 + 全站大纲 + 确定性扫描 + 正文样本</td><td>判断表达是否偏离得先有基线；结构问题由代码扫描供给</td></tr>
+          <tr><td>用户问题生成</td><td>上游基线 + 全站大纲</td><td>客户会问什么，取决于这家公司卖什么、卖给谁</td></tr>
+          <tr><td>内容策略</td><td><strong>纯上游产出</strong></td><td>它的工作是排序不是分析，不必再碰原始语料</td></tr>
+          <tr><td><strong>原文问答</strong></td><td><strong>混合检索 top-5 小节</strong></td><td>要答的是指向具体内容的问题，需要精确召回</td></tr>
+          <tr><td>整合收口</td><td>上游产出 + 用户问题</td><td>把能力形状的产出对齐回问题形状</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="note good">
+      <span class="lab">为什么分析型环节不走检索</span>
+      <p>
+        问「官网品牌定位是什么」「哪些内容适合被 AI 引用」，要的是通读全站得出的整体判断。
+        给它 top-5 反而有害——<strong>等于让模型基于 5 段内容去评价 51 页</strong>。
+        而「GEO 和 SEO 有什么区别」要的是精确定位到某一段。
+        检索与全局摘要解决的不是同一类问题，六个环节里只有原文问答属于后者。
+      </p>
+    </div>
+
+    <h3>第五个 Agent：原文问答</h3>
     <p>
       四个分析型 Agent 都是「通读全站 → 输出固定小节」的形态，答不了指向具体内容的问题。
       问「GEO 和 SEO 有什么区别」时，路由只能指向官网信息分析，而它的八个小节里没有一节是
@@ -2907,6 +2971,18 @@ streamlit                       <span class="c"># Demo 界面</span></pre>
             <td>大纲只校验数量，不校验覆盖面</td>
             <td>7 个问题也可能全都围着同一件事打转</td>
             <td>比对大纲与资料库目录的覆盖度，对未被触及的章节给出提示</td>
+          </tr>
+          <tr>
+            <td><strong>身份页路径为硬编码</strong></td>
+            <td><code>IDENTITY_PATHS</code> 写死了 <code>/</code>、<code>/about</code>、<code>/contact</code>、
+                <code>/geo-agent</code> 四条，最后一条是本站独有。换一个站点时它匹配不到任何页面，
+                那 15% 的身份页预算就少分一页——<strong>不报错，只静默少给</strong>，
+                正是本文反复批评的那种失效方式</td>
+            <td>已验证可由确定性规则替代：先取被 ≥90% 页面指向的全局导航页（10 个），
+                再按「路径下无子页面」区分身份页与板块入口——
+                <code>/about</code>(0)、<code>/contact</code>(0)、<code>/geo-agent</code>(0) 对
+                <code>/geo-center</code>(18)、<code>/blog</code>(16)、<code>/news</code>(10)。
+                该规则在本站上推导结果与手写列表完全一致</td>
           </tr>
           <tr>
             <td>知识库仅支持单文档</td>

@@ -40,3 +40,7 @@ BRAND_ALIAS=英文名或产品名
 
 Prompt 中的品牌名由 `core.llm.load_prompt` 自动注入，无需逐个文件替换。
 知识库那一侧把 PDF 放到 `data/source/brand_deck.pdf` 后重跑 `kb.parse → kb.vision → kb.chunk`。
+
+> **一处已知限制**：`agents/context.py` 的 `IDENTITY_PATHS`（身份页路径）仍是硬编码，
+> 其中 `/geo-agent` 为当前分析对象独有。换站后它匹配不到页面，身份页预算会少分一页——
+> 不报错、只静默少给。换站时请照着新站点的实际路径改这一行。详见 README「已知不足 #9」。
